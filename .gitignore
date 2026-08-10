@@ -1,0 +1,14 @@
+# 환경변수 / 시크릿 (절대 커밋 금지)
+.env
+.env.local
+
+# 백엔드/프론트엔드는 각자 backend/.gitignore, frontend/.gitignore가 상세 규칙 담당
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
