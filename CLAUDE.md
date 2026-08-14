@@ -46,14 +46,15 @@
 
 **제외**: 관리자 페이지 (1인용 도메인에 부적합, 2차 게시판형 프로젝트로 이관). 순서 변경 이유, 범위 결정 배경은 `docs/decisions.md` 참고.
 
-## 현재 상태 (2026-08-10 기준)
+## 현재 상태 (2026-08-13 기준)
 - [x] JWT/Spring Security 인증 개념 학습 완료 (8단계, `docs/troubleshooting.md` 참고)
 - [x] ①②②-2③ 기능 명세 확정 (`docs/specs.md`)
-- [x] DB 스키마 7개 테이블 설계 + MySQL 실행 검증 완료 (`docs/db-schema.sql`)
+- [x] DB 스키마 6개 테이블 설계 + MySQL 실행 검증 완료 (`docs/db-schema.sql`)
 - [x] Figma Make 디자인 확보 + 명세 대조 완료 (`docs/design-reference/`)
 - [x] 백엔드 뼈대 생성 (Spring Boot 4.0.7, `./gradlew test` 성공)
 - [x] 프론트 뼈대 생성 (Vite+React, `npm run dev` 성공)
-- [ ] `backend/CLAUDE.md`, `frontend/CLAUDE.md` 작성 — ①단계 코드 작성 시작 시 같이 만들 것
+- [x] `frontend/CLAUDE.md` 작성 완료 (스타일링/상태관리/컴포넌트/API 분리/토큰 저장 방침)
+- [x] `backend/CLAUDE.md` 작성 완료 (패키지 구조/JPA 규칙/코드 스타일/인증 보안, 판단 근거는 `docs/decisions.md` "백엔드 구현 판단" 참고)
 - [ ] ①단계(로그인/회원가입) 실제 구현 — 다음 작업
 - [ ] ②단계 이후 순서대로 진행
 

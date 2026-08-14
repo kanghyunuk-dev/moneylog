@@ -44,7 +44,7 @@ MoneyLog ①단계(로그인 구현) 착수 전, JWT 기반 인증의 전체 흐
 - **테이블명 `User` → `users`로 변경**: `USER`는 MySQL 예약어(시스템 계정 관련)라 실행 시 매번 백틱 이스케이프가 필요했음.
 - **컬럼명 `year_month` → `budget_month`로 변경**: `YEAR_MONTH`도 MySQL 8.0 예약어(INTERVAL 구문 키워드)라 문법 에러 발생. 매번 이스케이프하는 대신 이름 자체를 바꿔 근본 해결.
 - **한글 시드 데이터는 MySQL 클라이언트 접속 시 `--default-character-set=utf8mb4` 지정 필요**: 안 하면 한글 INSERT에서 인코딩 에러 발생(파일 자체는 UTF-8이 맞았음, 클라이언트 접속 인코딩 문제였음).
-- 이 세 가지 수정 후 7개 테이블 + FK 7개(CASCADE/RESTRICT 정책 포함) + 시드 데이터 14건까지 전부 의도대로 생성되는 것을 `information_schema` 조회로 최종 확인.
+- 이 세 가지 수정 후 6개 테이블 + FK 6개(CASCADE/RESTRICT 정책 포함) + 시드 데이터 14건까지 전부 의도대로 생성되는 것을 `information_schema` 조회로 최종 확인.
 
 ## Figma Make 디자인 - 기능 명세 대조 (2026-08-07)
 
