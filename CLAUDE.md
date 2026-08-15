@@ -55,7 +55,7 @@
 - [x] 프론트 뼈대 생성 (Vite+React, `npm run dev` 성공)
 - [x] `frontend/CLAUDE.md` 작성 완료 (스타일링/상태관리/컴포넌트/API 분리/토큰 저장 방침)
 - [x] `backend/CLAUDE.md` 작성 완료 (패키지 구조/JPA 규칙/코드 스타일/인증 보안, 판단 근거는 `docs/decisions.md` "백엔드 구현 판단" 참고)
-- [ ] ①단계(로그인/회원가입) 실제 구현 — 다음 작업
+- [ ] ①단계(로그인/회원가입) 실제 구현 — 착수함(회원가입 Entity/Repository/PasswordEncoder/Request·Response DTO 완료, 예외 처리·Service·Controller 남음)
 - [ ] ②단계 이후 순서대로 진행
 
 다른 컴퓨터에서 이어갈 때는 `docs/setup.md` 체크리스트부터 확인.
