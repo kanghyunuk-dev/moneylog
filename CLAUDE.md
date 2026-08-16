@@ -37,7 +37,7 @@
 ## 진행 순서
 | 단계 | 기능 | 목적 | 상태 |
 |---|---|---|---|
-| ① | 로그인/회원가입(JWT) | 인증 기초 — JWT 기반 인증 구조 설계 및 구현 | 착수 예정 |
+| ① | 로그인/회원가입(JWT) | 인증 기초 — JWT 기반 인증 구조 설계 및 구현 | 착수함(`feature/auth`) |
 | ② | 거래/예산/카테고리/대시보드 | React+Spring Boot 기초(폼, API 연동, JPA, 상태관리) 체화 | 예정 |
 | ②-2 | 목표자산(Goal) | ②단계 완료 후 확장 | 예정 |
 | ③ | 소셜로그인(구글) | OAuth2 기반 인증 확장 학습 | 예정 |
@@ -46,7 +46,7 @@
 
 **제외**: 관리자 페이지 (1인용 도메인에 부적합, 2차 게시판형 프로젝트로 이관). 순서 변경 이유, 범위 결정 배경은 `docs/decisions.md` 참고.
 
-## 현재 상태 (2026-08-13 기준)
+## 현재 상태 (2026-08-16 기준)
 - [x] JWT/Spring Security 인증 개념 학습 완료 (8단계, `docs/troubleshooting.md` 참고)
 - [x] ①②②-2③ 기능 명세 확정 (`docs/specs.md`)
 - [x] DB 스키마 6개 테이블 설계 + MySQL 실행 검증 완료 (`docs/db-schema.sql`)
@@ -55,7 +55,9 @@
 - [x] 프론트 뼈대 생성 (Vite+React, `npm run dev` 성공)
 - [x] `frontend/CLAUDE.md` 작성 완료 (스타일링/상태관리/컴포넌트/API 분리/토큰 저장 방침)
 - [x] `backend/CLAUDE.md` 작성 완료 (패키지 구조/JPA 규칙/코드 스타일/인증 보안, 판단 근거는 `docs/decisions.md` "백엔드 구현 판단" 참고)
-- [ ] ①단계(로그인/회원가입) 실제 구현 — 착수함(회원가입 Entity/Repository/PasswordEncoder/Request·Response DTO 완료, 예외 처리·Service·Controller 남음)
+- [x] ①단계 1/8단계(회원가입+BCrypt) 완료 — Entity/Repository/PasswordEncoder/DTO/예외처리/Service/Controller 전부 작성, Postman+DB 조회로 실동작 검증 완료(`feature/auth` 브랜치)
+- [ ] ①단계 2/8단계(Spring Security 인증 기본 골격) — 다음 작업
+- [ ] ①단계 나머지(3~8단계: JWT 발급, SecurityConfig, 401/403 처리, 프론트 토큰, 마이페이지, 소프트삭제) 순서대로 진행
 - [ ] ②단계 이후 순서대로 진행
 
 다른 컴퓨터에서 이어갈 때는 `docs/setup.md` 체크리스트부터 확인.
