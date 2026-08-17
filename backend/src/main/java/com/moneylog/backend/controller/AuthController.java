@@ -1,6 +1,8 @@
 package com.moneylog.backend.controller;
 
+import com.moneylog.backend.dto.request.LoginRequest;
 import com.moneylog.backend.dto.request.RegisterRequest;
+import com.moneylog.backend.dto.response.TokenResponse;
 import com.moneylog.backend.dto.response.UserResponse;
 import com.moneylog.backend.service.AuthService;
 import jakarta.validation.Valid;
@@ -25,4 +27,9 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
+        TokenResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
+    }
 }

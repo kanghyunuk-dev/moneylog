@@ -1,13 +1,23 @@
 package com.moneylog.backend.service;
 
+import com.moneylog.backend.dto.request.LoginRequest;
 import com.moneylog.backend.dto.request.RegisterRequest;
+import com.moneylog.backend.dto.response.TokenResponse;
 import com.moneylog.backend.dto.response.UserResponse;
+import com.moneylog.backend.entity.RefreshToken;
 import com.moneylog.backend.entity.User;
 import com.moneylog.backend.exception.DuplicateEmailException;
+import com.moneylog.backend.repository.RefreshTokenRepository;
 import com.moneylog.backend.repository.UserRepository;
+import com.moneylog.backend.security.JWTTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -15,6 +25,9 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JWTTokenProvider jwtTokenProvider;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     public UserResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
@@ -34,6 +47,42 @@ public class AuthService {
 
         return UserResponse.from(savedUser);
 
+    }
+
+    public TokenResponse login(LoginRequest request) {
+        // 1. 이메일+비밀번호 인증 (실패 시 BadCredentialsException 자동 발생)
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.email(), request.password())
+        );
+
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 이메일 입니다"));
+
+        // 2. AccessToken/RefreshToken 발급
+        String accessToken = jwtTokenProvider.createAccessToken(user.getEmail());
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
+
+        // 3. 기존 RefreshToken 있으면 교체, 없으면 신규 저장
+        updateRefreshToken(user, refreshToken);
+
+        // 4. 토큰 응답 반환
+        return new TokenResponse(accessToken, refreshToken);
+    }
+
+    private void updateRefreshToken(User user, String newRefreshToken) {
+        LocalDateTime expiresAt = LocalDateTime.now().plusDays(7);
+
+        refreshTokenRepository.findByUser(user)
+                .ifPresentOrElse(
+                        refreshToken -> refreshToken.updateToken(newRefreshToken, expiresAt),
+                        () -> refreshTokenRepository.save(
+                                RefreshToken.builder()
+                                        .user(user)
+                                        .token(newRefreshToken)
+                                        .expiresAt(expiresAt)
+                                        .build()
+                        )
+                );
     }
 
 }
