@@ -1,6 +1,7 @@
 package com.moneylog.backend.controller;
 
 import com.moneylog.backend.dto.request.LoginRequest;
+import com.moneylog.backend.dto.request.RefreshTokenRequest;
 import com.moneylog.backend.dto.request.RegisterRequest;
 import com.moneylog.backend.dto.response.TokenResponse;
 import com.moneylog.backend.dto.response.UserResponse;
@@ -32,4 +33,11 @@ public class AuthController {
         TokenResponse response = authService.login(request);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        TokenResponse response = authService.refresh(request);
+        return ResponseEntity.ok(response);
+    }
+
 }

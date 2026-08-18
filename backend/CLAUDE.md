@@ -24,6 +24,7 @@
 
 ## 예외 처리
 - 도메인 의미가 담긴 커스텀 예외(`DuplicateEmailException` 등, 앞으로 생길 유사 상황도 같은 패턴)를 던지고, `GlobalExceptionHandler`(`@RestControllerAdvice`) 하나가 모든 예외→HTTP 응답(상태 코드+메시지)을 일괄 변환. 자바 표준 예외(`IllegalArgumentException` 등) 즉석 사용 금지 — 의미가 모호하고 처리 로직이 Controller마다 흩어짐.
+- Spring Security 필터 단계(MVC 이전)의 인증/인가 실패는 `GlobalExceptionHandler`가 못 잡음 — `security/handler/`(`CustomAuthenticationEntryPoint`=401, `CustomAccessDeniedHandler`=403)에서 별도 처리, 응답 형식은 동일하게 `ErrorResponse` 재사용.
 
 ## 테스트
 - ①단계 코드를 실제로 짜면서 정함(첫 테스트를 같이 작성하고 그 경험으로 규칙 정리).
