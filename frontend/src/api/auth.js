@@ -1,0 +1,35 @@
+const BASE_URL = 'http://localhost:8080';
+
+// 로그인요청 (토큰 없는 상태)
+export async function loginRequest(email, password) {
+    const response = await fetch(`${BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email,password}),
+    });
+
+    // 실패 시
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message);
+    }
+
+    // 성공 시 (토큰 반환)
+    return response.json();
+}
+
+// 회원가입 요청
+export async function registerRequest(email, password, nickname) {
+    const response = await fetch(`${BASE_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email, password, nickname}),
+    });
+
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message);
+    }
+
+    return response.json();
+}

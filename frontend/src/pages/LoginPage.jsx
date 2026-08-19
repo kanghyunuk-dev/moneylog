@@ -1,6 +1,8 @@
+import './LoginPage.css';
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router";
+import { loginRequest } from "../api/auth";
 
 function LoginPage() {
 
@@ -19,28 +21,17 @@ function LoginPage() {
         setIsLoading(true);
 
         try {
-            // 1. 백엔드에 로그인 요청
-            const response = await fetch('http://localhost:8080/api/auth/login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({email, password}),
-            });
+            // 1. api/auth.js - loginRequest 함수 요청
+            const data = await loginRequest(email, password);
 
-            // 2. 실패하면 에레 메세지 전달
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.message);
-            }
-
-            // 3. 성공하면 토큰을 AuthContext에 저장 - 홈으로 이동
-            const data = await response.json();
+            // 2. 성공하면 토큰을 AuthContext에 저장 - 홈으로 이동
             login(data.accessToken, data.refreshToken);
             navigate('/');
         } catch (err) {
-            // 4. 실패 시 에러 메세지를 화면에 표시
+            // 3. 실패 시 에러 메세지를 화면에 표시
             setError(err.message);
         } finally {
-            // 5. 성공/실패 시 로딩 상태는 종료
+            // 4. 성공/실패 시 로딩 상태는 종료
             setIsLoading(false);
         }
     }
