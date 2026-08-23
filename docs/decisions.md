@@ -8,6 +8,7 @@
 - [기술적 깊이를 남기는 방향성](#기술적-깊이를-남기는-방향성)
 - [DB 설계 판단](#db-설계-판단) — 테이블/컬럼/FK 정책, "무엇을 어떻게 설계했는가"
 - [백엔드 구현 판단](#백엔드-구현-판단) — validate vs update, 연관관계 fetch 전략 등, "설계된 걸 코드로 어떻게 다루는가"
+- [프론트엔드 구현 판단](#프론트엔드-구현-판단) — 라우트 가드, 상태 정리 책임 등, "설계된 걸 React 코드로 어떻게 다루는가"
 
 ## 스택 선택
 
@@ -75,3 +76,11 @@ DB 설계(위 섹션)가 정해진 뒤, 그걸 JPA 코드로 어떻게 다룰지
 - **일반 가입자도 `users.provider`에 `"LOCAL"`을 명시(NULL로 안 둠)**: `NULL`은 "값이 없음/불명"을 뜻해 "일반 가입자임이 확실함"이라는 의도를 표현 못 하고, 나중에 데이터를 보다가 NULL을 발견하면 정상 처리인지 버그인지 구분이 안 됨. 쿼리도 `WHERE provider IS NULL OR ...`보다 `WHERE provider IN ('LOCAL','GOOGLE')`이 단순하고 `NULL` 비교 함정(`= NULL`이 항상 거짓)도 피함 — OAuth 스키마 설계 실무 컨센서스. `docs/specs.md`의 `provider="google"` 표기를 `db-schema.sql` 주석 기준(대문자)에 맞춰 `"GOOGLE"`로 정정함.
 - **예외는 커스텀 클래스 + `GlobalExceptionHandler`(`@RestControllerAdvice`) 일괄 처리, 자바 표준 예외 즉석 사용 금지**: `IllegalArgumentException`처럼 의미가 모호한 예외를 바로 던지면 Controller에서 못 잡을 시 500 에러로 뭉뚱그려지고, 사용자 잘못(이메일 중복 등)인지 서버 오류인지 클라이언트가 구분 못 함. 도메인 의미가 담긴 예외(`DuplicateEmailException` 등)를 던지고 한 곳(`GlobalExceptionHandler`)에서 HTTP 상태 코드+메시지로 변환하면, Controller마다 try-catch를 반복 안 해도 되고 에러 응답 형식이 일관됨. `docs/troubleshooting.md`의 `CustomAuthenticationEntryPoint`(401)/`CustomAccessDeniedHandler`(403)도 같은 원리라 5단계에서 자연스럽게 확장됨.
 - **패키지 구조는 계층별(Package by Layer) 유지, 기능별(Package by Feature)은 채택 안 함**: 기능별(도메인마다 controller/service/repository를 한 폴더에 묶는 방식)은 팀 프로젝트나 도메인이 많은 대규모 서비스에 적합 — 여러 사람이 각자 다른 도메인을 동시에 건드릴 때 충돌을 줄여줌. MoneyLog는 1인 프로젝트에 도메인도 최종 6개뿐이라 이 이점이 발휘될 상황이 아니고, 계층별 구조가 Controller-Service-Repository-DTO라는 스프링 기본 계층 개념을 배우는 학습 목적에 더 명확함. 전환 기준(폴더를 너무 오가게 되면, 또는 팀 프로젝트가 되면)은 알아두되 지금은 해당 안 됨 — `security` 패키지처럼 특정 도메인에 안 속하는 횡단 관심사는 계층별 구조에서도 별도 폴더로 자연스럽게 분리.
+- **RefreshToken은 JWT 자체 만료 검증 + DB `expires_at` 재검증을 함께 함(2026-08-22)**: `JWTTokenProvider.validateToken()`(JWT 서명·형식 검증)만으로는 DB에 저장된 토큰이 실제로 유효한지 확인할 수 없음 — 로그인 시 `expiresAt`을 DB에도 별도로 기록해두는 이유가 여기 있음. `refresh()`에서 JWT 검증만 하고 DB의 `expiresAt`을 비교하지 않으면, DB 컬럼을 만들어두고도 실제로는 활용을 안 하는 것과 같음. `savedToken.getExpiresAt().isBefore(LocalDateTime.now())`로 재검증을 추가해, 나중에 "특정 토큰을 DB에서 즉시 무효화"하는 관리 기능(강제 로그아웃 등)을 만들 여지도 남겨둠.
+
+## 프론트엔드 구현 판단
+
+설계(위 섹션)가 정해진 뒤, 그걸 React 코드로 어떻게 다룰지에 대한 판단. `frontend/CLAUDE.md`의 각 규칙이 왜 그런지는 여기 참고.
+
+- **`PrivateRoute`(라우트 가드)는 토큰을 직접 지우지 않고 리다이렉트 판단만 함(2026-08-22)**: 로그인 안 된 상태로 보호된 라우트에 접근했을 때, 남아있을 수 있는 무효 토큰까지 `PrivateRoute`가 직접 정리(`logout()` 호출)하는 방식도 검토했으나, 실무 표준은 "토큰 정리는 401을 실제로 받는 지점(`authFetch`)에서, 라우트 가드는 이미 정리된 상태(`isLoggedIn`)를 보고 판단만" — 정리 책임이 여러 곳으로 흩어지면 나중에 로직을 바꿀 때 누락 위험이 커짐. 우리 `authFetch.js`가 이미 401 시 두 토큰을 지우고 있어 이 원칙을 따르는 데 문제없음.
+- **로그인/회원가입 요청은 `authFetch`가 아니라 별도 `api/auth.js`(`loginRequest`/`registerRequest`)로 분리(2026-08-18)**: `authFetch`는 "이미 로그인된 사용자의 토큰을 자동 첨부하고, 401이면 refresh 후 재시도"하는 함수 — 그런데 로그인·회원가입 시점엔 애초에 토큰이 없고, 401을 받아도 그건 "토큰 만료"가 아니라 "아이디/비밀번호가 틀림"이라 `authFetch`의 존재 이유(토큰 자동 갱신)가 적용될 상황이 아님. 처음엔 `LoginPage`가 `fetch`를 직접 호출했는데, `frontend/CLAUDE.md`의 "컴포넌트 안 fetch 직접 호출 금지" 원칙과 맞지 않아 `api/auth.js`로 분리 — "인증이 필요한 요청(authFetch)"과 "인증 자체를 처리하는 요청(auth.js)"을 파일 단위로 나누는 기준으로 삼음. 앞으로 새 화면을 추가할 때도 이 기준(로그인 여부가 전제인가 아닌가)으로 어느 파일에 넣을지 판단.

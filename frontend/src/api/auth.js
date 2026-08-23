@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8080';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // 로그인요청 (토큰 없는 상태)
 export async function loginRequest(email, password) {

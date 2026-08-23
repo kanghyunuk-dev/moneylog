@@ -13,10 +13,12 @@ import com.moneylog.backend.exception.InvalidTokenException;
 import com.moneylog.backend.repository.RefreshTokenRepository;
 import com.moneylog.backend.repository.UserRepository;
 import com.moneylog.backend.security.JWTTokenProvider;
+import com.moneylog.backend.security.PrincipalDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -58,16 +60,17 @@ public class AuthService {
     @Transactional
     public TokenResponse login(LoginRequest request) {
         // 1. 이메일+비밀번호 인증 (실패 시 BadCredentialsException 자동 발생)
+        Authentication authentication;
         try {
-            authenticationManager.authenticate(
+            authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.email(), request.password())
             );
         } catch (BadCredentialsException | UsernameNotFoundException e) {
             throw new InvalidCredentialsException("이메일 또는 비밀번호가 올바르지 않습니다");
         }
 
-        User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 이메일 입니다"));
+        PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
+        User user = principalDetails.getUser();
 
         // 2. AccessToken/RefreshToken 발급
         String accessToken = jwtTokenProvider.createAccessToken(user.getEmail());
@@ -106,6 +109,11 @@ public class AuthService {
 
         RefreshToken savedToken = refreshTokenRepository.findByToken(refreshToken)
                 .orElseThrow(() -> new InvalidTokenException("존재하지 않는 토큰 입니다"));
+
+        // 만료된 refresh 토큰 검증
+        if (savedToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new InvalidTokenException("만료된 토큰 입니다");
+        }
 
         String email = savedToken.getUser().getEmail();
         String newAccessToken = jwtTokenProvider.createAccessToken(email);
