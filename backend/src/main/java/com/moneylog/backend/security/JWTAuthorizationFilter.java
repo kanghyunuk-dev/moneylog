@@ -2,6 +2,7 @@ package com.moneylog.backend.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +24,7 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        // 1. 헤더에서 토큰 추출
+        // 1. 쿠키에서 토큰 추출
         String token = resolveToken(request);
 
         if(token != null && jwtTokenProvider.validateToken(token)) {
@@ -44,10 +45,17 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
     }
 
     private String resolveToken(HttpServletRequest request) {
-        String header = request.getHeader("Authorization");
-        if(header != null && header.startsWith("Bearer ")) {
-            return header.substring(7);
+        Cookie[] cookies = request.getCookies();
+        if(cookies == null) {
+            return null;
         }
+
+        for(Cookie cookie : cookies) {
+            if(cookie.getName().equals("accessToken")) {
+                return cookie.getValue();
+            }
+        }
+
         return null;
     }
 

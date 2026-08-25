@@ -6,14 +6,16 @@ import com.moneylog.backend.dto.request.RegisterRequest;
 import com.moneylog.backend.dto.response.TokenResponse;
 import com.moneylog.backend.dto.response.UserResponse;
 import com.moneylog.backend.service.AuthService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.Duration;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -29,15 +31,46 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
-        TokenResponse response = authService.login(request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Void> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
+        TokenResponse tokens = authService.login(request);
+
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken", tokens.accessToken())
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(Duration.ofMinutes(30))
+                .build();
+
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokens.refreshToken())
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(Duration.ofDays(7))
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<TokenResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
-        TokenResponse response = authService.refresh(request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Void> refresh(@CookieValue("refreshToken") String refreshToken, HttpServletResponse response) {
+        TokenResponse tokens = authService.refresh(new RefreshTokenRequest(refreshToken));
+
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken", tokens.accessToken())
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(Duration.ofMinutes(30))
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+
+        return ResponseEntity.ok().build();
     }
 
 }

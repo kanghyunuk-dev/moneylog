@@ -1,7 +1,5 @@
-import { createContext, useContext, useState } from "react";
-
-// 로그인 정보를 앱 전체에서 공유하기 위한 Context
-const AuthContext = createContext(null);
+import { useState } from "react";
+import { AuthContext } from "./AuthContext";
 
 // 앱 전체를 감싸서, 하위 컴포넌트 어디서든 로그인 상태를 쓸 수 있게 해주는 컴포넌트
 export function AuthProvider({children}) {
@@ -32,9 +30,4 @@ export function AuthProvider({children}) {
     // children(이 Provider로 감싸진 다른 컴포넌트들) 에게 value 를 전달
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 
-}
-
-// 다른 컴포넌트에서 로그인 상태를 꺼내 쓸 때 사용하는 함수
-export function useAuth() {
-    return useContext(AuthContext);
 }

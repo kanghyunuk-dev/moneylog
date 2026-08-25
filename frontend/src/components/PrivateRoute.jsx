@@ -1,5 +1,5 @@
-import {Navigate} from "react-router";
-import {useAuth} from "../context/AuthContext";
+import { Navigate } from "react-router";
+import { useAuth } from "../context/useAuth";
 
 function PrivateRoute({children}) {
     const {isLoggedIn} = useAuth();
