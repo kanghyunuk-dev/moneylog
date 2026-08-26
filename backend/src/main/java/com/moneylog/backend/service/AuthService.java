@@ -121,4 +121,9 @@ public class AuthService {
         return new TokenResponse(newAccessToken, refreshToken);
     }
 
+    @Transactional
+    public void logout(String refreshToken) {
+        refreshTokenRepository.findByToken(refreshToken)
+                .ifPresent(refreshTokenRepository::delete);
+    }
 }

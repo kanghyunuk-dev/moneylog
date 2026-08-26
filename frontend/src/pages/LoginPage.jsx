@@ -21,11 +21,11 @@ function LoginPage() {
         setIsLoading(true);
 
         try {
-            // 1. api/auth.js - loginRequest 함수 요청
-            const data = await loginRequest(email, password);
+            // 1. api/auth.js - loginRequest 함수 요청 (토큰은 서버가 쿠키로 저장)
+            await loginRequest(email, password);
 
-            // 2. 성공하면 토큰을 AuthContext에 저장 - 홈으로 이동
-            login(data.accessToken, data.refreshToken);
+            // 2. 성공하면 AuthContext의 로그인 상태만 갱신 - 홈으로 이동
+            login();
             navigate('/');
         } catch (err) {
             // 3. 실패 시 에러 메세지를 화면에 표시

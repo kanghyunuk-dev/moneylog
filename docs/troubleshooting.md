@@ -78,3 +78,12 @@ Spring Initializr(start.spring.io)에서 직접 옵션을 선택해 zip으로 �
 - **생성 결과 확인**: `src/App.jsx`, `src/main.jsx` 등 `.jsx` 확장자로 정상 생성됨. React 19.2.8. `npm run dev`로 개발 서버 실행 후 기본 화면과 카운터 버튼(state 동작) 정상 확인.
 - **"뼈대를 API 없이 미리 만들어도 되는가" 판단**: 원래 "backend API 준비 후 프론트 착수"로 정했던 건 실제 로직(로그인 폼, API 연동, 토큰 저장 등)을 API 없이 짜면 나중에 재작업이 생긴다는 이유였음. 하지만 "뼈대 초기화"는 API에 대한 어떤 가정도 담지 않는 별개 단계라 지금 해둬도 손해가 없다고 재판단.
 - **`.gitignore` 정리**: `frontend/.gitignore`도 Vite가 자동 생성 — 루트 `.gitignore`의 중복 항목 제거.
+
+## httpOnly+CSRF 전환 중 CSRF 403 에러 (2026-08-26)
+
+localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `CsrfConfigurer::spa()` 적용 직후) 실제로 겪은 문제.
+
+- **증상**: 로그인 요청(`POST /api/auth/login`)이 `CustomAccessDeniedHandler`가 응답하는 403("접근 권한이 없습니다")으로 실패. Application 탭에서 확인하니 `XSRF-TOKEN` 쿠키 자체는 브라우저에 존재.
+- **원인**: `CsrfConfigurer::spa()`는 CSRF 검증 방식(쿠키 저장소, 요청 핸들러)만 설정할 뿐, 토큰을 실제로 쿠키에 심는 시점은 지연 평가(deferred)라 누군가 그 값을 명시적으로 "읽어야만" 쿠키가 생성됨. `XSRF-TOKEN` 쿠키가 아예 없는 상태(첫 방문, 쿠키 삭제 후)에서 첫 `POST` 요청을 보내면 CSRF 토큰 없이 나가 거부당함.
+- **해결**: `CsrfFilter` 뒤에 `CsrfCookieFilter`(직접 만든 `OncePerRequestFilter`, `request.getAttribute("_csrf")`를 읽어 `CsrfToken.getToken()`을 호출해 강제로 쿠키 생성을 트리거)를 `addFilterAfter`로 추가 — Spring 공식 SPA 가이드의 표준 패턴.
+- **재현 조건 확인**: 실제로는 `AuthProvider`가 마운트 시 `GET /api/auth/me`를 항상 먼저 호출해서 이 상황을 우회시켜주고 있어, 정상적인 사용자 흐름(페이지 로드 → 로그인 시도)에서는 문제가 되지 않음. 브라우저 쿠키를 지운 뒤 새로고침 없이 바로 로그인 버튼을 누르는 것처럼, 페이지 마운트 없이 요청만 보내는 테스트 방식에서만 재현됨 — 이 구분을 몰라서 처음엔 필터가 안 먹힌 줄 알고 재검토했었음.

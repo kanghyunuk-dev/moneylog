@@ -1,28 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AuthContext } from "./AuthContext";
+import { authFetch } from "../api/authFetch";
 
 // 앱 전체를 감싸서, 하위 컴포넌트 어디서든 로그인 상태를 쓸 수 있게 해주는 컴포넌트
 export function AuthProvider({children}) {
-    // 초기값
-    const [accessToken, setAccessToken] = useState(localStorage.getItem('accessToken'));
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // 컴포넌트 처음 렌더링 - 서버에 로그인 상태 확인
+    useEffect(()=>{
+        authFetch('/api/auth/me')
+            .then((response) => setIsLoggedIn(response.ok))
+            .catch(() => setIsLoggedIn(false))
+            .finally(() => setIsLoading(false));
+    }, []);
     
     // 로그인 성공 시 호출
-    function login(accessToken, refreshToken) {
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        setAccessToken(accessToken);
+    function login() {
+        setIsLoggedIn(true);
     }
 
     // 로그아웃 시 호출
-    function logout() {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        setAccessToken(null);
+    async function logout() {
+        await authFetch('/api/auth/logout', { method: 'POST' });
+        setIsLoggedIn(false);
     }
 
     // 하위 컴포넌트에 전달할 값들을 하나로 묶음
     const value = {
-        isLoggedIn: !!accessToken,
+        isLoggedIn,
+        isLoading,
         login,
         logout,
     };

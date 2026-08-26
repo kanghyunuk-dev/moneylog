@@ -11,7 +11,7 @@
 ## 상태 관리 — 별도 라이브러리 없이 React Context
 - 지금 전역 상태로 볼 만한 건 로그인 여부/사용자 정보 정도뿐. 거래·예산·대시보드 데이터는 각 페이지가 API로 그때그때 가져오는 서버 상태라 전역 상태가 아님.
 - Redux 등은 상태가 복잡하게 얽힐 때 진가를 발휘하는데, 지금 규모에 쓰면 보일러플레이트만 늘고 얻는 이득이 없음. Context+useState로 로그인 여부만 관리.
-- 값 저장은 `localStorage`, 리렌더링 트리거는 Context state로 역할을 분리(localStorage 변화 자체는 React가 감지 못하기 때문).
+- 토큰 값 자체는 서버가 httpOnly 쿠키로 관리하고 프론트는 접근 불가 — Context state는 "로그인 여부"만 담아 리렌더링 트리거로 사용.
 - 나중에 상태가 실제로 복잡해지면 다음 후보는 Redux가 아니라 Zustand(2023~2025 사이 신규 프로젝트의 실질 표준으로 부상, 보일러플레이트가 적음).
 
 ## 컴포넌트 — 함수형 + Hooks만
@@ -24,8 +24,10 @@
 - `authFetch` 패턴(토큰 자동 첨부 + 401 시 refresh 후 재시도)이 로그인 이후 거의 모든 요청에 공통으로 필요하므로 한 곳에서만 구현.
 - axios 대신 fetch를 쓰는 이유: axios의 인터셉터가 하는 일이 정확히 이 `authFetch`이므로, 라이브러리로 기능을 가져다 쓰기보다 왜 그 기능이 필요한지 직접 구현해보며 이해하는 쪽을 택함. axios 자체는 실무에서 흔히 쓰이므로 알아야 하는 도구지만, 원리를 먼저 익힌 뒤 봐야 "왜 이렇게 설계됐는지"가 바로 이해됨.
 
-## 인증 토큰 저장 — localStorage (전환 시점은 미확정)
-- AccessToken/RefreshToken은 `localStorage`에 저장하고 `Authorization` 헤더로 전송. httpOnly 쿠키+CSRF가 실무 표준(XSS에 더 안전)이지만, 지금은 JWT 흐름 자체를 신규 문제로 격리해서 익히기 위해 localStorage로 시작. 전환 시점은 ①단계 완주 후 판단 — 상세 트레이드오프는 `docs/decisions.md`의 "①단계 토큰 저장" 참고.
+## 인증 토큰 저장 — httpOnly 쿠키 + CSRF
+- AccessToken/RefreshToken은 서버가 httpOnly 쿠키로 발급(`Set-Cookie`), 프론트는 값을 읽거나 저장하지 않음 — 요청 시 `credentials: 'include'`만 지정하면 브라우저가 자동 전송. `POST`/`PUT`/`DELETE` 요청에는 `XSRF-TOKEN` 쿠키 값을 `X-XSRF-TOKEN` 헤더로 실어야 함(`api/cookie.js`의 `getCookie` 사용).
+- 로그인 여부는 `localStorage` 확인이 아니라 `GET /api/auth/me` 서버 응답으로 판단(`AuthProvider`가 마운트 시 확인) — httpOnly라 프론트가 토큰 존재 자체를 알 수 없기 때문.
+- 처음엔 JWT 흐름 자체를 신규 문제로 격리해서 익히려 localStorage로 시작했고, ①단계 6단계(로그인/회원가입 실동작 검증) 완료 후 httpOnly+CSRF로 전환 완료(2026-08-26) — 상세 트레이드오프와 전환 판단 근거는 `docs/decisions.md`의 "①단계 토큰 저장", "프론트엔드 구현 판단" 참고.
 
 ## 폴더 구조 (①단계부터 적용)
 - `src/pages/` — 라우트 단위 화면(LoginPage, SignupPage, MyPage 등)

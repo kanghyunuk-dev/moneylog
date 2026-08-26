@@ -4,7 +4,7 @@
 이 파일은 "지금 뭘 하기로 했는가 + AI가 항상 지켜야 할 규칙"만 짧게 담는다. 상세 내용은 아래를 참고:
 - **`docs/specs.md`** — 무엇을 만들기로 했는가 (화면+API 단위 기능 명세)
 - **`docs/decisions.md`** — 왜 이렇게 설계/선택했는가 (기술 스택, DB 설계 판단 등)
-- **`docs/troubleshooting.md`** — 어떤 문제를 겪고 어떻게 풀었는가 (인증 개념 학습 기록 포함)
+- **`docs/troubleshooting.md`** — 어떤 문제를 겪고 어떻게 풀었는가 (실제 에러/환경 이슈 전반 + 인증 개념 학습 기록)
 - **`docs/setup.md`** — 새 컴퓨터에서 시작할 때 체크리스트
 - **`docs/db-schema.sql`** — 실행 가능한 DB 스키마 (정답 소스)
 - **`docs/design-reference/`** — 화면 디자인 참고 스크린샷
@@ -46,7 +46,7 @@
 
 **제외**: 관리자 페이지 (1인용 도메인에 부적합, 2차 게시판형 프로젝트로 이관). 순서 변경 이유, 범위 결정 배경은 `docs/decisions.md` 참고.
 
-## 현재 상태 (2026-08-25 기준)
+## 현재 상태 (2026-08-26 기준)
 - [x] JWT/Spring Security 인증 개념 학습 완료 (8단계, `docs/troubleshooting.md` 참고)
 - [x] ①②②-2③ 기능 명세 확정 (`docs/specs.md`)
 - [x] DB 스키마 6개 테이블 설계 + MySQL 실행 검증 완료 (`docs/db-schema.sql`)
@@ -57,8 +57,7 @@
 - [x] `backend/CLAUDE.md` 작성 완료 (패키지 구조/JPA 규칙/코드 스타일/인증 보안, 판단 근거는 `docs/decisions.md` "백엔드 구현 판단" 참고)
 - [x] ①단계 1/8단계(회원가입+BCrypt) 완료
 - [x] ①단계 2~6/8단계 완료 — Spring Security 골격, JWT 발급/검증, 401/403 처리, CORS, 프론트 로그인·회원가입·홈 화면 및 라우트 보호까지 실동작 검증 완료(`feature/auth` 브랜치)
-- [x] localStorage → httpOnly+CSRF 전환 착수 — 백엔드(AuthController 쿠키 발급, JWTAuthorizationFilter 쿠키 인식, SecurityConfig CSRF 재활성화) 완료, 판단 근거는 `docs/decisions.md` "백엔드 구현 판단" 참고
-- [ ] httpOnly+CSRF 전환 나머지 — 프론트(authFetch/auth.js/AuthProvider 쿠키 기반 전환), 로그인 상태 확인 API·로그아웃 API 신설 필요
+- [x] localStorage → httpOnly+CSRF 전환 완료 — 백엔드(AuthController 쿠키 발급/GET me/POST logout, JWTAuthorizationFilter 쿠키 인식, SecurityConfig CSRF 재활성화) + 프론트(authFetch/auth.js/AuthProvider 쿠키·CSRF 기반 전환) 실동작 검증 완료, 판단 근거는 `docs/decisions.md` "백엔드/프론트엔드 구현 판단" 참고
 - [ ] ①단계 나머지(7~8단계: 마이페이지, 소프트삭제) 순서대로 진행
 - [ ] ②단계 이후 순서대로 진행
 

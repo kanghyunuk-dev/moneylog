@@ -1,51 +1,50 @@
+import { getCookie } from "./cookie";
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// RefreshToken 으로 새 AccessToken 발급 받는 함수
+// RefreshToken(쿠키방식) 으로 새 AccessToken 발급 받는 함수
 async function refreshAccessToken() {
-    const refreshToken = localStorage.getItem('refreshToken');
-
-    // 1. 백엔드의 /api/auth/refresh 호출
+    // 1. 백엔드의 /api/auth/refresh 호출 (refreshToken 은 쿠키로 자동 전송)
     const response = await fetch(`${BASE_URL}/api/auth/refresh`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({refreshToken}),
+        credentials: "include",
+        headers: {
+            'X-XSRF-TOKEN': getCookie('XSRF-TOKEN'),
+        },
     });
 
-    // 2. RefreshToken 유효하지 않으면(만료/탈취 등) 완전히 로그아웃
-    if(!response.ok) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        throw new Error('세션이 만료 되었습니다');
-    }
-
-    // 3. 새 AccessToken을 저장하고 반환
-    const data = await response.json();
-    localStorage.setItem('accessToken', data.accessToken);
-    return data.accessToken;
+    // 2. 성공 여부만 반환 (실패 시 예외 던지지 않음 - 호출부가 원래 401 응답으로 처리)
+    return response.ok;
 }
 
 // 모든 API 호출이 거쳐가는 공통 함수
 export async function authFetch(path, options = {}) {
-    const accessToken = localStorage.getItem('accessToken');
-
-    // 1. 저장된 AccessToken을 헤더에 실어서 요청
+    // 1. 쿠키방식 - CSRF 헤더만 추가, acceessToken 은 브라우저가 자동 실어 보냄
     const response = await fetch(`${BASE_URL}${path}`,{
         ...options,
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json',
-            ...(accessToken ? {Authorization: `Bearer ${accessToken}`} : {}),
+            'X-XSRF-TOKEN': getCookie('XSRF-TOKEN'),
             ...options.headers,
         },
     });
 
     // 2. AccessToken 만료(401)면 자동으로 재발급 받고 원래 요청 재시도
     if(response.status === 401) {
-        const newAccessToken = await refreshAccessToken();
+        const refreshed = await refreshAccessToken();
+        
+        // RefreshToken 도 만료/무효 시 - 재시도 하지 않고 원래 401 응답 반환
+        if(!refreshed) {
+            return response;
+        }
+
         return fetch(`${BASE_URL}${path}`, {
             ...options,
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${newAccessToken}`,
+                'X-XSRF-TOKEN': getCookie('XSRF-TOKEN'),
                 ...options.headers,
             },
         });
