@@ -2,6 +2,19 @@ import { getCookie } from "./cookie";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+// 인증된 요청 공통 옵션(쿠키 전송 + CSRF 헤더)을 만드는 함수
+function buildRequestOptions(options) {
+    return {
+        ...options,
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-XSRF-TOKEN': getCookie('XSRF-TOKEN'),
+            ...options.headers,
+        },
+    };
+}
+
 // RefreshToken(쿠키방식) 으로 새 AccessToken 발급 받는 함수
 async function refreshAccessToken() {
     // 1. 백엔드의 /api/auth/refresh 호출 (refreshToken 은 쿠키로 자동 전송)
@@ -20,15 +33,7 @@ async function refreshAccessToken() {
 // 모든 API 호출이 거쳐가는 공통 함수
 export async function authFetch(path, options = {}) {
     // 1. 쿠키방식 - CSRF 헤더만 추가, acceessToken 은 브라우저가 자동 실어 보냄
-    const response = await fetch(`${BASE_URL}${path}`,{
-        ...options,
-        credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-XSRF-TOKEN': getCookie('XSRF-TOKEN'),
-            ...options.headers,
-        },
-    });
+    const response = await fetch(`${BASE_URL}${path}`, buildRequestOptions(options));
 
     // 2. AccessToken 만료(401)면 자동으로 재발급 받고 원래 요청 재시도
     if(response.status === 401) {
@@ -39,15 +44,7 @@ export async function authFetch(path, options = {}) {
             return response;
         }
 
-        return fetch(`${BASE_URL}${path}`, {
-            ...options,
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-XSRF-TOKEN': getCookie('XSRF-TOKEN'),
-                ...options.headers,
-            },
-        });
+        return fetch(`${BASE_URL}${path}`, buildRequestOptions(options));
     }
 
     // 3. 정상 응답이면 그대로 반환

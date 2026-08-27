@@ -87,3 +87,12 @@ localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `Csr
 - **원인**: `CsrfConfigurer::spa()`는 CSRF 검증 방식(쿠키 저장소, 요청 핸들러)만 설정할 뿐, 토큰을 실제로 쿠키에 심는 시점은 지연 평가(deferred)라 누군가 그 값을 명시적으로 "읽어야만" 쿠키가 생성됨. `XSRF-TOKEN` 쿠키가 아예 없는 상태(첫 방문, 쿠키 삭제 후)에서 첫 `POST` 요청을 보내면 CSRF 토큰 없이 나가 거부당함.
 - **해결**: `CsrfFilter` 뒤에 `CsrfCookieFilter`(직접 만든 `OncePerRequestFilter`, `request.getAttribute("_csrf")`를 읽어 `CsrfToken.getToken()`을 호출해 강제로 쿠키 생성을 트리거)를 `addFilterAfter`로 추가 — Spring 공식 SPA 가이드의 표준 패턴.
 - **재현 조건 확인**: 실제로는 `AuthProvider`가 마운트 시 `GET /api/auth/me`를 항상 먼저 호출해서 이 상황을 우회시켜주고 있어, 정상적인 사용자 흐름(페이지 로드 → 로그인 시도)에서는 문제가 되지 않음. 브라우저 쿠키를 지운 뒤 새로고침 없이 바로 로그인 버튼을 누르는 것처럼, 페이지 마운트 없이 요청만 보내는 테스트 방식에서만 재현됨 — 이 구분을 몰라서 처음엔 필터가 안 먹힌 줄 알고 재검토했었음.
+
+## 마이페이지 닉네임/비밀번호 변경이 DB에 반영 안 됨 (2026-08-27)
+
+`UserController`/`UserService` 작성 중 Postman으로 `PUT /api/users/me`를 테스트하며 실제로 겪은 문제.
+
+- **증상**: `PUT /api/users/me`가 200 OK를 응답하는데, DB의 `users` 테이블 `nickname` 값이 그대로였음. 코드에는 에러가 전혀 안 남.
+- **원인**: `@AuthenticationPrincipal`로 받은 `User`는 `JWTAuthorizationFilter`(요청 처리 초입, 별도 트랜잭션 경계)에서 조회된 객체라, `UserService`의 `@Transactional` 메서드가 시작되는 시점엔 이미 JPA 영속성 컨텍스트에서 떨어져 나간(detached) 상태. 더티 체킹(자동 UPDATE)은 "지금 트랜잭션에 관리되고 있는(managed)" 엔티티에서만 동작하는데, detached 엔티티의 필드를 바꿔도 JPA가 추적을 안 해서 UPDATE 쿼리 자체가 안 나감 — 에러 없이 조용히 실패.
+- **해결**: `UserService` 메서드 안에서 `userRepository.findById(user.getId())`로 다시 조회한 `managedUser`를 사용 — 이 객체는 지금 트랜잭션에 확실히 attached 상태라 더티 체킹이 정상 동작함. Spring Security + JPA 조합에서 흔히 발생하는 패턴으로, 실무에서도 "Service에서 엔티티를 수정하기 전에 재조회하라"가 표준 해결책으로 알려져 있음(Baeldung 등 확인).
+- **부수적으로 발견한 버그**: 처음 수정할 때 `updatePassword()`에서 현재 비밀번호 검증(`passwordEncoder.matches`)에는 여전히 예전 `user`(detached)를 참조하고, 실제 변경(`changePassword`)에만 `managedUser`를 쓰는 실수가 있었음 — 두 시점 모두 `managedUser`로 통일해 수정.

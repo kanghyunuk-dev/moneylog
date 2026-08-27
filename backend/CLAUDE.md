@@ -22,7 +22,7 @@
 - JWT AccessToken 30분/RefreshToken 7일, RefreshToken은 `refresh_token` 테이블 저장(④단계 전까지).
 - 탈퇴 여부는 매 요청 DB 재조회(`existsByEmailAndDeletedAtIsNull`) — ①단계용 단순화. ④단계에서 Redis 블랙리스트/세션 버전 패턴으로 최적화 예정.
 - 토큰은 응답 바디가 아니라 httpOnly `ResponseCookie`(`secure(false)`는 로컬 HTTP 개발 환경 한정, 배포 시 `true`로 전환 필요)로 발급 — `AuthController`의 `login`/`refresh`/`logout`이 각각 발급·재발급·만료(`maxAge(0)`)를 담당. `JWTAuthorizationFilter`는 `Authorization` 헤더가 아니라 쿠키에서 토큰을 읽음.
-- CSRF는 `SecurityConfig`에서 `CsrfConfigurer::spa()`(Spring Security 7의 SPA 전용 설정)로 활성화하고, `CsrfCookieFilter`(직접 작성, `CsrfFilter` 뒤에 배치)로 `XSRF-TOKEN` 쿠키 생성을 강제 트리거 — 판단 근거는 `docs/decisions.md` "백엔드 구현 판단", 실제 겪은 403 에러는 `docs/troubleshooting.md` 참고.
+- CSRF는 `SecurityConfig`에서 `CsrfConfigurer::spa()`(Spring Security 7의 SPA 전용 설정, 채택 이유는 `docs/decisions.md` "백엔드 구현 판단" 참고)로 활성화하고, `CsrfCookieFilter`(직접 작성, `CsrfFilter` 뒤에 배치)로 `XSRF-TOKEN` 쿠키 생성을 강제 트리거 — 이 필터가 왜 필요했는지(403 에러 실제 재현/원인/해결)는 `docs/troubleshooting.md` 참고.
 - 로그인 상태 확인은 `GET /api/auth/me`(SecurityContext의 인증 여부로 200/401 응답), 로그아웃은 `POST /api/auth/logout`(쿠키 만료 + DB의 RefreshToken 삭제).
 
 ## 예외 처리
