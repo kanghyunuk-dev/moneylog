@@ -1,0 +1,196 @@
+.mypage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px;
+    width: 100%;
+}
+
+.mypage h1 {
+    font-size: 28px;
+    margin-bottom: 4px;
+}
+
+.mypage > p {
+    color: var(--text);
+    font-size: 15px;
+    margin-bottom: 24px;
+}
+
+/* 카드 공통 */
+.profile-card,
+.password-card,
+.danger-zone {
+    width: 100%;
+    max-width: 480px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+/* 프로필 헤더 */
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.profile-header .avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.profile-header h2 {
+    font-size: 18px;
+    margin-bottom: 2px;
+}
+
+.profile-header p {
+    color: var(--text);
+    font-size: 14px;
+}
+
+.join-date {
+    color: var(--text);
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+/* 닉네임 변경 */
+.nickname-section {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.nickname-section label {
+    display: block;
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.nickname-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.nickname-row input {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card-bg);
+    color: var(--text-h);
+    font-size: 14px;
+}
+
+.nickname-row button {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.nickname-row button:hover {
+    background: var(--accent-hover);
+}
+
+/* 비밀번호 변경 폼 */
+.password-card h2 {
+    margin-bottom: 16px;
+}
+
+.password-card label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: var(--text);
+}
+
+.password-card input {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text-h);
+    font-size: 15px;
+}
+
+.password-card input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.password-card button[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.password-card button[type="submit"]:hover {
+    background: var(--accent-hover);
+}
+
+.password-card button[type="submit"]:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 계정 관리(위험 영역) */
+.danger-zone h2 {
+    margin-bottom: 4px;
+}
+
+.danger-zone p {
+    color: var(--text);
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+.danger-zone a {
+    color: var(--error);
+    font-size: 14px;
+    text-decoration: none;
+}
+
+/* 에러 메시지 */
+.error-message {
+    color: var(--error);
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+/* 성공 메시지 */
+.success-message {
+    color: var(--success);
+    font-size: 13px;
+    margin-top: 8px;
+}

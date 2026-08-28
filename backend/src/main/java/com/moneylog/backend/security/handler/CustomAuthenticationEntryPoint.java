@@ -23,7 +23,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json; charset=UTF-8");
 
-        ErrorResponse errorResponse = new ErrorResponse("인증이 필요합니다");
+        ErrorResponse errorResponse = new ErrorResponse("인증이 필요합니다", "TOKEN_INVALID");
         response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
     }
 }

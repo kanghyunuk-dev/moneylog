@@ -5,9 +5,9 @@ import com.moneylog.backend.dto.request.PasswordUpdateRequest;
 import com.moneylog.backend.dto.response.UserResponse;
 import com.moneylog.backend.entity.User;
 import com.moneylog.backend.exception.InvalidCredentialsException;
+import com.moneylog.backend.exception.UserNotFoundException;
 import com.moneylog.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,14 +27,14 @@ public class UserService {
     @Transactional
     public void updateNickname(User user, NicknameUpdateRequest request) {
         User managedUser = userRepository.findById(user.getId())
-                        .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 사용자 입니다"));
+                        .orElseThrow(() -> new UserNotFoundException("존재하지 않는 사용자 입니다"));
         managedUser.changeNickname(request.nickname());
     }
 
     @Transactional
     public void updatePassword(User user, PasswordUpdateRequest request) {
         User managedUser = userRepository.findById(user.getId())
-                .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 사용자 입니다"));
+                .orElseThrow(() -> new UserNotFoundException("존재하지 않는 사용자 입니다"));
 
         // 1. 현재 비밀번호 검증
         if(!passwordEncoder.matches(request.currentPassword(), managedUser.getPassword())) {

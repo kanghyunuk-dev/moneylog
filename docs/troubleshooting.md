@@ -96,3 +96,12 @@ localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `Csr
 - **원인**: `@AuthenticationPrincipal`로 받은 `User`는 `JWTAuthorizationFilter`(요청 처리 초입, 별도 트랜잭션 경계)에서 조회된 객체라, `UserService`의 `@Transactional` 메서드가 시작되는 시점엔 이미 JPA 영속성 컨텍스트에서 떨어져 나간(detached) 상태. 더티 체킹(자동 UPDATE)은 "지금 트랜잭션에 관리되고 있는(managed)" 엔티티에서만 동작하는데, detached 엔티티의 필드를 바꿔도 JPA가 추적을 안 해서 UPDATE 쿼리 자체가 안 나감 — 에러 없이 조용히 실패.
 - **해결**: `UserService` 메서드 안에서 `userRepository.findById(user.getId())`로 다시 조회한 `managedUser`를 사용 — 이 객체는 지금 트랜잭션에 확실히 attached 상태라 더티 체킹이 정상 동작함. Spring Security + JPA 조합에서 흔히 발생하는 패턴으로, 실무에서도 "Service에서 엔티티를 수정하기 전에 재조회하라"가 표준 해결책으로 알려져 있음(Baeldung 등 확인).
 - **부수적으로 발견한 버그**: 처음 수정할 때 `updatePassword()`에서 현재 비밀번호 검증(`passwordEncoder.matches`)에는 여전히 예전 `user`(detached)를 참조하고, 실제 변경(`changePassword`)에만 `managedUser`를 쓰는 실수가 있었음 — 두 시점 모두 `managedUser`로 통일해 수정.
+
+## `AuthController.me()`가 바디 없는 401을 응답해 자동 refresh가 무력화됨 (2026-08-28)
+
+`ErrorResponse`에 `errorCode` 필드를 추가해 "토큰 문제(401)"와 "비밀번호 불일치 등 도메인 검증 실패(401)"를 구분하려던 중 실제로 겪은 문제.
+
+- **증상**: AccessToken 쿠키만 지우고 새로고침하면 `GET /api/auth/me`가 401을 응답하는데도, `authFetch`가 `/api/auth/refresh`를 호출하지 않고 곧바로 로그인 화면으로 튕김 — RefreshToken이 멀쩡히 남아있는데도 로그인이 풀림(예전에 고쳤던 문제가 재발한 것처럼 보였음).
+- **원인**: `AuthController.me()`가 인증 안 된 경우 `ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()`처럼 **바디 없이** 401을 응답하고 있었음. `authFetch`가 이 401을 받아 `response.clone().json()`으로 `errorCode`를 확인하려 했지만, 바디가 아예 없어 JSON 파싱이 실패하고 `.catch(() => null)`로 넘어가 `data`가 `null` → `data?.errorCode`가 `undefined` → `"TOKEN_INVALID"`와 달라 refresh를 건너뜀. `CustomAuthenticationEntryPoint`(필터 단계 401)는 이미 `ErrorResponse` 바디를 보내고 있었는데, `me()`(컨트롤러 단계 401, `SecurityContextHolder`를 직접 확인)만 이 패턴에서 빠져 있었음.
+- **해결**: `me()`도 다른 401 응답들과 동일하게 `ErrorResponse("인증이 필요합니다", "TOKEN_INVALID")`를 바디로 포함하도록 수정 — 반환 타입을 `ResponseEntity<Void>`에서 `ResponseEntity<?>`로 변경(성공 시 바디 없음, 실패 시 `ErrorResponse` 바디로 타입이 갈리기 때문). 브라우저에서 AccessToken 삭제 후 새로고침 시 `me`(401) → `refresh`(200) → `me`(200) 순서로 요청이 나가고 로그인 상태가 유지되는 것까지 확인.
+- **참고**: `errorCode` 도입 자체의 판단 근거는 `docs/decisions.md` "백엔드 구현 판단" 참고.

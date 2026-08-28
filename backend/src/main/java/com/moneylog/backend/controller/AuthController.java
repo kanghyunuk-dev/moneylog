@@ -3,6 +3,7 @@ package com.moneylog.backend.controller;
 import com.moneylog.backend.dto.request.LoginRequest;
 import com.moneylog.backend.dto.request.RefreshTokenRequest;
 import com.moneylog.backend.dto.request.RegisterRequest;
+import com.moneylog.backend.dto.response.ErrorResponse;
 import com.moneylog.backend.dto.response.TokenResponse;
 import com.moneylog.backend.dto.response.UserResponse;
 import com.moneylog.backend.exception.InvalidTokenException;
@@ -58,11 +59,11 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<Void> me() {
+    public ResponseEntity<?> me() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if(authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("인증이 필요합니다", "TOKEN_INVALID"));
         }
 
         return ResponseEntity.ok().build();

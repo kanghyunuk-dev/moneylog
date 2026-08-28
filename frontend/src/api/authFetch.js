@@ -35,8 +35,17 @@ export async function authFetch(path, options = {}) {
     // 1. 쿠키방식 - CSRF 헤더만 추가, acceessToken 은 브라우저가 자동 실어 보냄
     const response = await fetch(`${BASE_URL}${path}`, buildRequestOptions(options));
 
-    // 2. AccessToken 만료(401)면 자동으로 재발급 받고 원래 요청 재시도
+    // 2. AccessToken 이 401(errorCode: TOKEN_INVALID)인 경우만 재발급 받고 원래 요청 재시도
     if(response.status === 401) {
+        // 복사본 으로 errorCode만 확인
+        const cloned = response.clone();
+        const data = await cloned.json().catch(()=>null);
+
+        // 토큰 문제로 인한 401인 경우 만 refresh 시도
+        if(data?.errorCode !== 'TOKEN_INVALID') {
+            return response;
+        }
+
         const refreshed = await refreshAccessToken();
         
         // RefreshToken 도 만료/무효 시 - 재시도 하지 않고 원래 401 응답 반환

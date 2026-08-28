@@ -46,7 +46,7 @@
 
 **제외**: 관리자 페이지 (1인용 도메인에 부적합, 2차 게시판형 프로젝트로 이관). 순서 변경 이유, 범위 결정 배경은 `docs/decisions.md` 참고.
 
-## 현재 상태 (2026-08-27 기준)
+## 현재 상태 (2026-08-28 기준)
 - [x] JWT/Spring Security 인증 개념 학습 완료 (8단계, `docs/troubleshooting.md` 참고)
 - [x] ①②②-2③ 기능 명세 확정 (`docs/specs.md`)
 - [x] DB 스키마 6개 테이블 설계 + MySQL 실행 검증 완료 (`docs/db-schema.sql`)
@@ -58,8 +58,8 @@
 - [x] ①단계 1/8단계(회원가입+BCrypt) 완료
 - [x] ①단계 2~6/8단계 완료 — Spring Security 골격, JWT 발급/검증, 401/403 처리, CORS, 프론트 로그인·회원가입·홈 화면 및 라우트 보호까지 실동작 검증 완료(`feature/auth` 브랜치)
 - [x] localStorage → httpOnly+CSRF 전환 완료 — 백엔드(AuthController 쿠키 발급/GET me/POST logout, JWTAuthorizationFilter 쿠키 인식, SecurityConfig CSRF 재활성화) + 프론트(authFetch/auth.js/AuthProvider 쿠키·CSRF 기반 전환) 실동작 검증 완료, 판단 근거는 `docs/decisions.md` "백엔드/프론트엔드 구현 판단" 참고
-- [x] ①단계 7/8단계(마이페이지) 백엔드 진행 중 — `GET/PUT /api/users/me`, `PUT /api/users/me/password` 작성 및 Postman 실동작 검증 완료(닉네임/비밀번호 변경까지 확인). 프론트(`MyPage.jsx`)는 미착수
-- [ ] ①단계 나머지(7단계 프론트, 8단계 소프트삭제) 순서대로 진행
+- [x] ①단계 7/8단계(마이페이지) 완료 — 백엔드 `GET/PUT /api/users/me`, `PUT /api/users/me/password`(JPA detached entity 재조회 패턴) + 프론트 `MyPage.jsx`(닉네임 인라인 편집, 비밀번호 변경 폼) 실동작 검증 완료. 회원탈퇴(`DELETE /api/users/me`)는 8단계(소프트삭제)에서 별도 진행
+- [ ] ①단계 나머지(8단계 소프트삭제) 순서대로 진행
 - [ ] ②단계 이후 순서대로 진행
 
 다른 컴퓨터에서 이어갈 때는 `docs/setup.md` 체크리스트부터 확인.
