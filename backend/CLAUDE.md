@@ -3,7 +3,7 @@
 루트 `CLAUDE.md`(목적/스택/진행순서)를 먼저 참고. 여기는 backend 코드를 짤 때 지키는 실무 규칙을 담는다. 판단 근거는 `docs/decisions.md`의 "백엔드 구현 판단" 섹션 참고.
 
 ## 패키지 구조
-`com.moneylog.backend` 하위를 `controller`(요청/응답) / `service`(비즈니스 로직) / `repository`(DB 접근) / `entity`(`docs/db-schema.sql` 매핑) / `dto`(API 전달용, Entity 직접 노출 안 함) / `exception`(커스텀 예외 + 전역 처리기)으로 분리.
+`com.moneylog.backend` 하위를 `controller`(요청/응답) / `service`(비즈니스 로직) / `repository`(DB 접근) / `entity`(`docs/db-schema.sql` 매핑) / `dto`(API 전달용, Entity 직접 노출 안 함) / `exception`(커스텀 예외 + 전역 처리기)으로 분리. 특정 도메인에 속하지 않는 횡단 관심사는 `security`(인증/인가), `scheduler`(주기적 배치 작업)처럼 별도 폴더로 분리.
 - 이유: 책임이 섞이면 문제 원인 구분이 어려워지고 테스트도 힘들어짐. Repository/Entity는 JPA 관례 이름이지만 역할 자체는 MyBatis 등에서도 이름만 바꿔(Mapper·DAO, VO) 동일하게 쓰이는 범용 개념.
 
 ## JPA 규칙
@@ -20,8 +20,9 @@
 ## 인증/보안
 - Spring Boot 4.0.7 → Spring Security 7.0.6(`./gradlew dependencies`로 확인, 버전은 항상 재확인하고 추측 금지). 구버전 DSL(`authorizeRequests()` 등) 금지.
 - JWT AccessToken 30분/RefreshToken 7일, RefreshToken은 `refresh_token` 테이블 저장(④단계 전까지).
-- 탈퇴 여부는 매 요청 DB 재조회(`existsByEmailAndDeletedAtIsNull`) — ①단계용 단순화. ④단계에서 Redis 블랙리스트/세션 버전 패턴으로 최적화 예정.
-- 토큰은 응답 바디가 아니라 httpOnly `ResponseCookie`(`secure(false)`는 로컬 HTTP 개발 환경 한정, 배포 시 `true`로 전환 필요)로 발급 — `AuthController`의 `login`/`refresh`/`logout`이 각각 발급·재발급·만료(`maxAge(0)`)를 담당. `JWTAuthorizationFilter`는 `Authorization` 헤더가 아니라 쿠키에서 토큰을 읽음.
+- 탈퇴 여부는 매 요청 DB 재조회(`PrincipalDetailsService`/`AuthService.refresh()`가 각각 확인) — ①단계용 단순화, ④단계에서 Redis로 최적화 예정.
+- 회원탈퇴(`DELETE /api/users/me`, 비밀번호 확인 필요)는 소프트 삭제 처리, `UserCleanupScheduler`(`scheduler` 패키지)가 30일 뒤 하드 삭제.
+- 토큰은 응답 바디가 아니라 httpOnly `ResponseCookie`(`secure(false)`는 로컬 HTTP 개발 환경 한정, 배포 시 `true`로 전환 필요)로 발급 — `AuthController`의 `login`/`refresh`/`logout`, `UserController`의 `withdraw`가 각각 발급·재발급·만료(`maxAge(0)`)를 담당, 쿠키 생성 로직은 `security/CookieUtils`(정적 메서드)로 공통화. `JWTAuthorizationFilter`는 `Authorization` 헤더가 아니라 쿠키에서 토큰을 읽음.
 - CSRF는 `SecurityConfig`에서 `CsrfConfigurer::spa()`(Spring Security 7의 SPA 전용 설정, 채택 이유는 `docs/decisions.md` "백엔드 구현 판단" 참고)로 활성화하고, `CsrfCookieFilter`(직접 작성, `CsrfFilter` 뒤에 배치)로 `XSRF-TOKEN` 쿠키 생성을 강제 트리거 — 이 필터가 왜 필요했는지(403 에러 실제 재현/원인/해결)는 `docs/troubleshooting.md` 참고.
 - 로그인 상태 확인은 `GET /api/auth/me`(SecurityContext의 인증 여부로 200/401 응답), 로그아웃은 `POST /api/auth/logout`(쿠키 만료 + DB의 RefreshToken 삭제).
 

@@ -7,13 +7,13 @@ import com.moneylog.backend.dto.response.ErrorResponse;
 import com.moneylog.backend.dto.response.TokenResponse;
 import com.moneylog.backend.dto.response.UserResponse;
 import com.moneylog.backend.exception.InvalidTokenException;
+import com.moneylog.backend.security.CookieUtils;
 import com.moneylog.backend.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -39,8 +39,8 @@ public class AuthController {
     public ResponseEntity<Void> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         TokenResponse tokens = authService.login(request);
 
-        response.addHeader(HttpHeaders.SET_COOKIE, buildCookie("accessToken", tokens.accessToken(), Duration.ofMinutes(30)).toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, buildCookie("refreshToken", tokens.refreshToken(), Duration.ofDays(7)).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("accessToken", tokens.accessToken(), Duration.ofMinutes(30)).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("refreshToken", tokens.refreshToken(), Duration.ofDays(7)).toString());
 
         return ResponseEntity.ok().build();
     }
@@ -53,7 +53,7 @@ public class AuthController {
 
         TokenResponse tokens = authService.refresh(new RefreshTokenRequest(refreshToken));
 
-        response.addHeader(HttpHeaders.SET_COOKIE, buildCookie("accessToken", tokens.accessToken(), Duration.ofMinutes(30)).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("accessToken", tokens.accessToken(), Duration.ofMinutes(30)).toString());
 
         return ResponseEntity.ok().build();
     }
@@ -75,19 +75,10 @@ public class AuthController {
             authService.logout(refreshToken);
         }
 
-        response.addHeader(HttpHeaders.SET_COOKIE, buildCookie("accessToken", "", Duration.ZERO).toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, buildCookie("refreshToken", "", Duration.ZERO).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("accessToken", "", Duration.ZERO).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("refreshToken", "", Duration.ZERO).toString());
 
         return ResponseEntity.ok().build();
     }
 
-    private ResponseCookie buildCookie(String name, String value, Duration maxAge) {
-        return ResponseCookie.from(name, value)
-                .httpOnly(true)
-                .secure(false)
-                .sameSite("Strict")
-                .path("/")
-                .maxAge(maxAge)
-                .build();
-    }
 }

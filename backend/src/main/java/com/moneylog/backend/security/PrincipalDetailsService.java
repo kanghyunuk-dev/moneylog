@@ -19,6 +19,10 @@ public class PrincipalDetailsService implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 이메일 입니다"));
 
+        if(user.getDeletedAt() != null) {
+            throw new UsernameNotFoundException("탈퇴한 계정 입니다");
+        }
+
         return new PrincipalDetails(user);
     }
 

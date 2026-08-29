@@ -2,10 +2,12 @@ package com.moneylog.backend.service;
 
 import com.moneylog.backend.dto.request.NicknameUpdateRequest;
 import com.moneylog.backend.dto.request.PasswordUpdateRequest;
+import com.moneylog.backend.dto.request.WithdrawRequest;
 import com.moneylog.backend.dto.response.UserResponse;
 import com.moneylog.backend.entity.User;
 import com.moneylog.backend.exception.InvalidCredentialsException;
 import com.moneylog.backend.exception.UserNotFoundException;
+import com.moneylog.backend.repository.RefreshTokenRepository;
 import com.moneylog.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +20,7 @@ public class UserService {
 
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Transactional(readOnly = true)
     public UserResponse getMyInfo(User user) {
@@ -45,4 +48,18 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(request.newPassword());
         managedUser.changePassword(encodedPassword);
     }
+
+    @Transactional
+    public void withdraw(User user, WithdrawRequest request) {
+        User managedUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new UserNotFoundException("존재하지 않는 사용자 입니다"));
+
+        if(!passwordEncoder.matches(request.password(), managedUser.getPassword())) {
+            throw new InvalidCredentialsException("비밀번호가 일치하지 않습니다");
+        }
+
+        managedUser.softDelete();
+        refreshTokenRepository.deleteByUser(managedUser);
+    }
+
 }

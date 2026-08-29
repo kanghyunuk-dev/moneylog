@@ -115,6 +115,11 @@ public class AuthService {
             throw new InvalidTokenException("만료된 토큰 입니다");
         }
 
+        // 탈퇴한 계정은 재발급 차단
+        if(savedToken.getUser().getDeletedAt() != null) {
+            throw new InvalidTokenException("유효하지 않은 토큰 입니다");
+        }
+
         String email = savedToken.getUser().getEmail();
         String newAccessToken = jwtTokenProvider.createAccessToken(email);
 

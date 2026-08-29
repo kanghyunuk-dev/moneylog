@@ -105,3 +105,12 @@ localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `Csr
 - **원인**: `AuthController.me()`가 인증 안 된 경우 `ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()`처럼 **바디 없이** 401을 응답하고 있었음. `authFetch`가 이 401을 받아 `response.clone().json()`으로 `errorCode`를 확인하려 했지만, 바디가 아예 없어 JSON 파싱이 실패하고 `.catch(() => null)`로 넘어가 `data`가 `null` → `data?.errorCode`가 `undefined` → `"TOKEN_INVALID"`와 달라 refresh를 건너뜀. `CustomAuthenticationEntryPoint`(필터 단계 401)는 이미 `ErrorResponse` 바디를 보내고 있었는데, `me()`(컨트롤러 단계 401, `SecurityContextHolder`를 직접 확인)만 이 패턴에서 빠져 있었음.
 - **해결**: `me()`도 다른 401 응답들과 동일하게 `ErrorResponse("인증이 필요합니다", "TOKEN_INVALID")`를 바디로 포함하도록 수정 — 반환 타입을 `ResponseEntity<Void>`에서 `ResponseEntity<?>`로 변경(성공 시 바디 없음, 실패 시 `ErrorResponse` 바디로 타입이 갈리기 때문). 브라우저에서 AccessToken 삭제 후 새로고침 시 `me`(401) → `refresh`(200) → `me`(200) 순서로 요청이 나가고 로그인 상태가 유지되는 것까지 확인.
 - **참고**: `errorCode` 도입 자체의 판단 근거는 `docs/decisions.md` "백엔드 구현 판단" 참고.
+
+## 탈퇴 계정 로그인 시도가 permitAll 경로까지 막음 (2026-08-29)
+
+`PrincipalDetailsService.loadUserByUsername()`에 탈퇴 여부 확인(`UsernameNotFoundException("탈퇴한 계정 입니다")`)을 추가한 뒤, 탈퇴 계정으로 실제 로그인을 시도하며 겪은 문제.
+
+- **증상**: 탈퇴한 계정으로 로그인하면 "탈퇴한 계정 입니다"가 아니라 "인증이 필요합니다"(401, `TOKEN_INVALID`)가 응답됨. Network 탭에서 `POST /api/auth/login` 요청 자체가 이 401을 받고 있었음.
+- **원인**: `JWTAuthorizationFilter`는 `/api/auth/login`처럼 `permitAll()`인 경로를 포함해 **모든 요청**에서 실행됨. 브라우저에 남아있던(로그아웃 전 발급된, 아직 만료 안 된) 해당 계정의 accessToken 쿠키가 있으면, 이 필터가 그 토큰으로 `principalDetailsService.loadUserByUsername()`을 먼저 호출함 — 이때 탈퇴 여부 체크가 새로 추가되며 `UsernameNotFoundException`을 던지게 됐는데, 필터가 이를 try-catch 없이 그대로 뒀음. 예외가 필터 밖으로 전파되면 `filterChain.doFilter()` 자체가 호출되지 않고, `ExceptionTranslationFilter`가 이를 가로채 `CustomAuthenticationEntryPoint`(제네릭 401)로 응답 — 로그인 요청이 `AuthController`/`AuthService`에 도달하지도 못하고 막혀버림.
+- **해결**: `JWTAuthorizationFilter`의 `loadUserByUsername()` 호출을 `catch (UsernameNotFoundException e)`로 감싸 SecurityContext 등록만 건너뛰고 `filterChain.doFilter()`는 항상 실행되도록 수정 — 필터 본래의 역할("토큰이 유효하면 인증 등록, 실패해도 다음 필터로 그냥 넘어감")을 되찾음. Spring Security 공식 GitHub 이슈(#14120, #12599 — "PermitAll routes returns 401 when token provided is expired/invalid")로 실제로 흔히 겪는 알려진 문제 패턴임을 확인 후 진행.
+- **참고**: 판단 배경(탈퇴 체크 지점을 로그인/매 요청 인가/refresh 세 곳으로 정리한 이유)은 `docs/decisions.md` "백엔드 구현 판단" 참고.

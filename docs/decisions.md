@@ -80,6 +80,9 @@ DB 설계(위 섹션)가 정해진 뒤, 그걸 JPA 코드로 어떻게 다룰지
 - **httpOnly+CSRF 전환 시 CSRF 설정은 `CsrfConfigurer::spa()`(Spring Security 7 신규 기능) 채택, 구버전 수동 설정은 안 씀(2026-08-23)**: 예전엔 SPA에서 CSRF를 쓰려면 `CookieCsrfTokenRepository.withHttpOnlyFalse()`(토큰을 쿠키로 노출) + `CsrfTokenRequestHandler`를 `CsrfTokenRequestAttributeHandler`로 직접 지정(Security 6 이후 기본 핸들러는 매 요청마다 토큰을 난독화해 SPA에서 토큰 불일치 문제를 일으킴)까지 손으로 설정해야 했음. Spring Security 7.0(Spring Boot 4.0과 짝)이 이 조합을 `http.csrf(CsrfConfigurer::spa)` 한 줄로 표준화 — 결과물(쿠키/헤더 이름, httpOnly 여부)은 구버전과 동일해 프론트 코드엔 영향 없음. 지금 프로젝트가 이 최신 버전을 쓰고 있어 신규 기능을 그대로 채택.
 - **닉네임 길이는 2자 이상 10자 이하로 제한(2026-08-28)**: 긴 닉네임 입력 시 UI가 깨지는 걸 확인, 네이버·카카오 등 한글 서비스의 일반적인 제한(대략 2~10자)을 참고해 `@Size(min=2, max=10)`으로 결정. 회원가입·마이페이지 수정 양쪽에 동일 적용.
 - **`UserService`가 Spring Security의 `UsernameNotFoundException`을 오용하던 것을 자체 `UserNotFoundException`으로 교체(2026-08-28)**: 이름만 보고 가져다 썼지만 이 클래스는 Spring Security의 인증 예외 체계에 속해 `GlobalExceptionHandler`를 못 타고 `CustomAuthenticationEntryPoint`로 새어 엉뚱한 401 메시지가 나가고 있었음 — "예외는 도메인 커스텀 클래스만" 원칙(위 항목)이 프레임워크 예외를 이름만 보고 재사용하는 경우에도 그대로 적용됨을 보여준 사례.
+- **쿠키 생성 로직을 `CookieUtils`로 공통화(2026-08-29)**: `AuthController`의 `buildCookie`와 동일한 코드가 `UserController.withdraw()`에도 필요해지며 중복 발생. 쿠키 옵션이 여러 파일에 흩어지면 배포 시 `secure(false)→true` 전환을 한 곳만 놓칠 위험이 있어 `security/CookieUtils`(정적 메서드)로 추출.
+- **`UserCleanupScheduler`를 `service`가 아닌 별도 `scheduler` 패키지로 분리(2026-08-29)**: "특정 도메인에 안 속하는 횡단 관심사는 별도 폴더로 분리"라는 기존 패키지 구조 원칙(위 항목)을 스케줄러에도 적용 — 비즈니스 로직 제공자(`@Service`)가 아니라 주기적으로 실행되는 작업 단위(`@Component`)라는 점에서 `service`와 성격이 다르다고 판단.
+- **`AuthService.refresh()`에도 탈퇴 여부 체크 추가(2026-08-29)**: 기존엔 로그인 시점(`PrincipalDetailsService`)과 매 요청 인가(`JWTAuthorizationFilter`)에서만 탈퇴 여부를 확인했는데, `refresh()`는 RefreshToken의 유효기간만 검증하고 탈퇴 여부는 안 봐서 탈퇴 계정도 새 AccessToken을 계속 발급받을 수 있는 경로가 남아있었음. Auth0/AWS Cognito/Okta 등이 계정 비활성화 시 즉시 토큰을 revoke하는 것을 표준으로 삼는다는 걸 확인 후, `savedToken.getUser().getDeletedAt()`을 재발급 직전에 확인하도록 추가.
 
 ## 프론트엔드 구현 판단
 
