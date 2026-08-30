@@ -39,7 +39,7 @@ public class AuthService {
     @Transactional
     public UserResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new DuplicateEmailException("이미 가입 된 이메일 입니다");
+            throw new DuplicateEmailException("사용할 수 없는 이메일 입니다");
         }
 
         String encodedPassword = passwordEncoder.encode(request.password());

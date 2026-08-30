@@ -31,4 +31,5 @@
 - Spring Security 필터 단계(MVC 이전)의 인증/인가 실패는 `GlobalExceptionHandler`가 못 잡음 — `security/handler/`(`CustomAuthenticationEntryPoint`=401, `CustomAccessDeniedHandler`=403)에서 별도 처리, 응답 형식은 동일하게 `ErrorResponse` 재사용.
 
 ## 테스트
-- ①단계 코드를 실제로 짜면서 정함(첫 테스트를 같이 작성하고 그 경험으로 규칙 정리).
+- Mockito(`@ExtendWith(MockitoExtension.class)` + `@Mock`/`@InjectMocks`) 기반 단위 테스트, AssertJ(`assertThat`)로 검증. given/when/then 주석으로 단계 구분, 테스트 메서드명은 한글로 "~하면_~된다" 형태(예: `유효한_토큰이면_SecurityContext에_인증정보가_설정된다`).
+- 지금까지는 인증/인가처럼 분기가 많고 매 요청마다 실행되는, 파급력 큰 로직(`JWTAuthorizationFilter` 등) 위주로 작성. 단순 CRUD는 실동작 확인으로 충분하다고 판단해 테스트 생략.

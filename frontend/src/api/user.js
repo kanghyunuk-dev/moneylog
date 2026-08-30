@@ -36,3 +36,16 @@ export async function updatePassword(currentPassword, newPassword) {
         throw new Error(data.message);
     }
 }
+
+// 회원탈퇴
+export async function withdraw(password) {
+    const response = await authFetch('/api/users/me', {
+        method: 'DELETE',
+        body: JSON.stringify({password}),
+    });
+
+    if(!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message);
+    }
+}
