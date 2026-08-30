@@ -1,0 +1,109 @@
+.signup-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 80px 16px;
+    width: 100%;
+}
+
+/* 로고 영역 */
+.signup-logo {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.signup-logo h1 {
+    font-size: 32px;
+    margin: 12px 0 4px;
+}
+
+.signup-logo p {
+    color: var(--text);
+    font-size: 15px;
+}
+
+/* 폼 카드 */
+.signup-form {
+    width: 100%;
+    max-width: 360px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 32px;
+    text-align: left;
+}
+
+.signup-form h2 {
+    margin: 0 0 20px;
+}
+
+.signup-form label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: var(--text);
+}
+
+.signup-form input {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 4px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text-h);
+    font-size: 15px;
+}
+
+.signup-form input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.password-hint {
+    color: var(--text);
+    font-size: 12px;
+    margin-bottom: 20px;
+}
+
+.signup-form button[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    margin-top: 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.signup-form button[type="submit"]:hover {
+    background: var(--accent-hover);
+}
+
+.signup-form button[type="submit"]:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 에러 메시지 */
+.error-message {
+    color: var(--error);
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+/* 하단 링크 */
+.login-link {
+    margin-top: 24px;
+    font-size: 14px;
+    color: var(--text);
+}
+
+.login-link a {
+    color: var(--accent);
+    text-decoration: none;
+}

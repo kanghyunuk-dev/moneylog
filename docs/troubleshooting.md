@@ -78,3 +78,39 @@ Spring Initializr(start.spring.io)에서 직접 옵션을 선택해 zip으로 �
 - **생성 결과 확인**: `src/App.jsx`, `src/main.jsx` 등 `.jsx` 확장자로 정상 생성됨. React 19.2.8. `npm run dev`로 개발 서버 실행 후 기본 화면과 카운터 버튼(state 동작) 정상 확인.
 - **"뼈대를 API 없이 미리 만들어도 되는가" 판단**: 원래 "backend API 준비 후 프론트 착수"로 정했던 건 실제 로직(로그인 폼, API 연동, 토큰 저장 등)을 API 없이 짜면 나중에 재작업이 생긴다는 이유였음. 하지만 "뼈대 초기화"는 API에 대한 어떤 가정도 담지 않는 별개 단계라 지금 해둬도 손해가 없다고 재판단.
 - **`.gitignore` 정리**: `frontend/.gitignore`도 Vite가 자동 생성 — 루트 `.gitignore`의 중복 항목 제거.
+
+## httpOnly+CSRF 전환 중 CSRF 403 에러 (2026-08-26)
+
+localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `CsrfConfigurer::spa()` 적용 직후) 실제로 겪은 문제.
+
+- **증상**: 로그인 요청(`POST /api/auth/login`)이 `CustomAccessDeniedHandler`가 응답하는 403("접근 권한이 없습니다")으로 실패. Application 탭에서 확인하니 `XSRF-TOKEN` 쿠키 자체는 브라우저에 존재.
+- **원인**: `CsrfConfigurer::spa()`는 CSRF 검증 방식(쿠키 저장소, 요청 핸들러)만 설정할 뿐, 토큰을 실제로 쿠키에 심는 시점은 지연 평가(deferred)라 누군가 그 값을 명시적으로 "읽어야만" 쿠키가 생성됨. `XSRF-TOKEN` 쿠키가 아예 없는 상태(첫 방문, 쿠키 삭제 후)에서 첫 `POST` 요청을 보내면 CSRF 토큰 없이 나가 거부당함.
+- **해결**: `CsrfFilter` 뒤에 `CsrfCookieFilter`(직접 만든 `OncePerRequestFilter`, `request.getAttribute("_csrf")`를 읽어 `CsrfToken.getToken()`을 호출해 강제로 쿠키 생성을 트리거)를 `addFilterAfter`로 추가 — Spring 공식 SPA 가이드의 표준 패턴.
+- **재현 조건 확인**: 실제로는 `AuthProvider`가 마운트 시 `GET /api/auth/me`를 항상 먼저 호출해서 이 상황을 우회시켜주고 있어, 정상적인 사용자 흐름(페이지 로드 → 로그인 시도)에서는 문제가 되지 않음. 브라우저 쿠키를 지운 뒤 새로고침 없이 바로 로그인 버튼을 누르는 것처럼, 페이지 마운트 없이 요청만 보내는 테스트 방식에서만 재현됨 — 이 구분을 몰라서 처음엔 필터가 안 먹힌 줄 알고 재검토했었음.
+
+## 마이페이지 닉네임/비밀번호 변경이 DB에 반영 안 됨 (2026-08-27)
+
+`UserController`/`UserService` 작성 중 Postman으로 `PUT /api/users/me`를 테스트하며 실제로 겪은 문제.
+
+- **증상**: `PUT /api/users/me`가 200 OK를 응답하는데, DB의 `users` 테이블 `nickname` 값이 그대로였음. 코드에는 에러가 전혀 안 남.
+- **원인**: `@AuthenticationPrincipal`로 받은 `User`는 `JWTAuthorizationFilter`(요청 처리 초입, 별도 트랜잭션 경계)에서 조회된 객체라, `UserService`의 `@Transactional` 메서드가 시작되는 시점엔 이미 JPA 영속성 컨텍스트에서 떨어져 나간(detached) 상태. 더티 체킹(자동 UPDATE)은 "지금 트랜잭션에 관리되고 있는(managed)" 엔티티에서만 동작하는데, detached 엔티티의 필드를 바꿔도 JPA가 추적을 안 해서 UPDATE 쿼리 자체가 안 나감 — 에러 없이 조용히 실패.
+- **해결**: `UserService` 메서드 안에서 `userRepository.findById(user.getId())`로 다시 조회한 `managedUser`를 사용 — 이 객체는 지금 트랜잭션에 확실히 attached 상태라 더티 체킹이 정상 동작함. Spring Security + JPA 조합에서 흔히 발생하는 패턴으로, 실무에서도 "Service에서 엔티티를 수정하기 전에 재조회하라"가 표준 해결책으로 알려져 있음(Baeldung 등 확인).
+- **부수적으로 발견한 버그**: 처음 수정할 때 `updatePassword()`에서 현재 비밀번호 검증(`passwordEncoder.matches`)에는 여전히 예전 `user`(detached)를 참조하고, 실제 변경(`changePassword`)에만 `managedUser`를 쓰는 실수가 있었음 — 두 시점 모두 `managedUser`로 통일해 수정.
+
+## `AuthController.me()`가 바디 없는 401을 응답해 자동 refresh가 무력화됨 (2026-08-28)
+
+`ErrorResponse`에 `errorCode` 필드를 추가해 "토큰 문제(401)"와 "비밀번호 불일치 등 도메인 검증 실패(401)"를 구분하려던 중 실제로 겪은 문제.
+
+- **증상**: AccessToken 쿠키만 지우고 새로고침하면 `GET /api/auth/me`가 401을 응답하는데도, `authFetch`가 `/api/auth/refresh`를 호출하지 않고 곧바로 로그인 화면으로 튕김 — RefreshToken이 멀쩡히 남아있는데도 로그인이 풀림(예전에 고쳤던 문제가 재발한 것처럼 보였음).
+- **원인**: `AuthController.me()`가 인증 안 된 경우 `ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()`처럼 **바디 없이** 401을 응답하고 있었음. `authFetch`가 이 401을 받아 `response.clone().json()`으로 `errorCode`를 확인하려 했지만, 바디가 아예 없어 JSON 파싱이 실패하고 `.catch(() => null)`로 넘어가 `data`가 `null` → `data?.errorCode`가 `undefined` → `"TOKEN_INVALID"`와 달라 refresh를 건너뜀. `CustomAuthenticationEntryPoint`(필터 단계 401)는 이미 `ErrorResponse` 바디를 보내고 있었는데, `me()`(컨트롤러 단계 401, `SecurityContextHolder`를 직접 확인)만 이 패턴에서 빠져 있었음.
+- **해결**: `me()`도 다른 401 응답들과 동일하게 `ErrorResponse("인증이 필요합니다", "TOKEN_INVALID")`를 바디로 포함하도록 수정 — 반환 타입을 `ResponseEntity<Void>`에서 `ResponseEntity<?>`로 변경(성공 시 바디 없음, 실패 시 `ErrorResponse` 바디로 타입이 갈리기 때문). 브라우저에서 AccessToken 삭제 후 새로고침 시 `me`(401) → `refresh`(200) → `me`(200) 순서로 요청이 나가고 로그인 상태가 유지되는 것까지 확인.
+- **참고**: `errorCode` 도입 자체의 판단 근거는 `docs/decisions.md` "백엔드 구현 판단" 참고.
+
+## 탈퇴 계정 로그인 시도가 permitAll 경로까지 막음 (2026-08-29)
+
+`PrincipalDetailsService.loadUserByUsername()`에 탈퇴 여부 확인(`UsernameNotFoundException("탈퇴한 계정 입니다")`)을 추가한 뒤, 탈퇴 계정으로 실제 로그인을 시도하며 겪은 문제.
+
+- **증상**: 탈퇴한 계정으로 로그인하면 "탈퇴한 계정 입니다"가 아니라 "인증이 필요합니다"(401, `TOKEN_INVALID`)가 응답됨. Network 탭에서 `POST /api/auth/login` 요청 자체가 이 401을 받고 있었음.
+- **원인**: `JWTAuthorizationFilter`는 `/api/auth/login`처럼 `permitAll()`인 경로를 포함해 **모든 요청**에서 실행됨. 브라우저에 남아있던(로그아웃 전 발급된, 아직 만료 안 된) 해당 계정의 accessToken 쿠키가 있으면, 이 필터가 그 토큰으로 `principalDetailsService.loadUserByUsername()`을 먼저 호출함 — 이때 탈퇴 여부 체크가 새로 추가되며 `UsernameNotFoundException`을 던지게 됐는데, 필터가 이를 try-catch 없이 그대로 뒀음. 예외가 필터 밖으로 전파되면 `filterChain.doFilter()` 자체가 호출되지 않고, `ExceptionTranslationFilter`가 이를 가로채 `CustomAuthenticationEntryPoint`(제네릭 401)로 응답 — 로그인 요청이 `AuthController`/`AuthService`에 도달하지도 못하고 막혀버림.
+- **해결**: `JWTAuthorizationFilter`의 `loadUserByUsername()` 호출을 `catch (UsernameNotFoundException e)`로 감싸 SecurityContext 등록만 건너뛰고 `filterChain.doFilter()`는 항상 실행되도록 수정 — 필터 본래의 역할("토큰이 유효하면 인증 등록, 실패해도 다음 필터로 그냥 넘어감")을 되찾음. Spring Security 공식 GitHub 이슈(#14120, #12599 — "PermitAll routes returns 401 when token provided is expired/invalid")로 실제로 흔히 겪는 알려진 문제 패턴임을 확인 후 진행.
+- **참고**: 판단 배경(탈퇴 체크 지점을 로그인/매 요청 인가/refresh 세 곳으로 정리한 이유)은 `docs/decisions.md` "백엔드 구현 판단" 참고.
