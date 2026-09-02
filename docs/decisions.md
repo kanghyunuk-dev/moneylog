@@ -54,6 +54,8 @@ MoneyLog는 (1) 로그인 뒤에만 쓰는 개인 서비스라 SEO(검색엔진 
 - **budget_month는 VARCHAR(7)**: "일자"는 의미가 없고 "년-월"만 필요한데 MySQL에 전용 타입이 마땅치 않아 문자열이 실무에서도 흔히 쓰임. (원래 컬럼명은 `year_month`였으나 MySQL 예약어 충돌로 변경 — `docs/troubleshooting.md` 참고)
 - **Category는 Java enum이 아니라 테이블로 설계**: 나중에 사용자 정의 카테고리를 붙일 때 이 테이블에 사용자 소유 행을 추가하는 구조로 자연스럽게 확장 가능하기 때문.
 - **RefreshToken을 email이 아닌 user_id(FK)로 연결**: RefreshToken을 User와 FK 없이 email 문자열로만 느슨하게 연결하는 방식도 검토했으나(탈퇴 시 애플리케이션 로직으로 먼저 지우고 스케줄러가 FK 제약 없이 정리하기 편하다는 장점은 있음), 이 방식은 DB가 정합성을 보장해주지 않는다는 문제가 있음(존재하지 않는 이메일을 가리키는 고아 토큰이 생길 수 있음, 이메일 변경 기능을 나중에 추가하면 더 취약해짐). `user_id`로 FK 연결하고 `ON DELETE CASCADE`를 걸면 삭제 편의성과 정합성을 둘 다 얻을 수 있음. (email 로그인 시스템이라도 로그인 "입력값"이 email일 뿐, 내부 연관관계는 PK인 userId로 맺는 것이 표준.)
+- **Transaction에 updated_at 추가(2026-09-02)**: created_at만으로는 사용자가 나중에 수정한 거래인지 구분이 안 됨. Transaction은 `PUT /api/transactions/{id}`로 사용자가 직접 수정 가능한 데이터라, 수정 이력 추적이 필요한 일반 애플리케이션 테이블 기준(User와 동일)에 해당 — 반면 고정 시드 데이터인 Category는 수정 자체가 없어 대상에서 제외.
+- **transaction_date는 DATE(LocalDate), DATETIME 아님(2026-09-02)**: 거래가 "몇 시에" 있었는지는 의미가 없고 "어느 날짜에" 있었는지만 중요함(가계부 집계가 전부 일/월 단위). 시각까지 저장하면 타임존 변환 과정에서 자정 근처 거래가 하루 밀리는 버그 위험만 생기고 얻는 이점이 없음 — "날짜 자체가 의미 단위인 값은 타임존 변환 없는 date-only로 저장한다"는 일반적인 관례를 따름. 서버가 자동 기록하는 `created_at`(시각까지 의미 있음)과 사용자가 입력하는 `transaction_date`(날짜만 의미 있음)를 타입부터 구분되게 설계.
 
 ### FK 정책 (`ON DELETE`/`ON UPDATE`)
 - **User 참조(RefreshToken, Transaction, Budget, Goal 전체)**: `ON DELETE CASCADE, ON UPDATE CASCADE`. 판단 기준: "부모(User)가 없어지면 자식 데이터가 존재할 이유가 있는가?" — 회원탈퇴는 "이 사람의 모든 흔적을 지운다"는 의미가 명확하므로, User가 삭제(UserCleanupScheduler가 30일 뒤 하드 삭제)될 때 연관 데이터도 자동으로 같이 지워지는 게 자연스러움.

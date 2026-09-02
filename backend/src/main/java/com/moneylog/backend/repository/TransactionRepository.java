@@ -1,0 +1,17 @@
+package com.moneylog.backend.repository;
+
+import com.moneylog.backend.entity.Transaction;
+import com.moneylog.backend.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+
+    List<Transaction> findByUserAndTransactionDateBetweenOrderByTransactionDateDesc(User user, LocalDate start, LocalDate end);
+
+    Optional<Transaction> findByIdAndUser(Long id, User user);
+
+}
