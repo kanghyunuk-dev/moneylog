@@ -71,6 +71,13 @@ svg {
 }
 
 #root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 가운데 정렬된 화면 전용 wrapper */
+.auth-layout {
   width: 1126px;
   max-width: 100%;
   margin: 0 auto;
@@ -81,7 +88,7 @@ svg {
   flex-direction: column;
 }
 
-/* 여러 화면(로그인/회원가입 등)에서 공통으로 쓰는 로고 배지 */
+/* 여러 화면 공통으로 쓰는 로고 배지 */
 .logo-badge {
   display: inline-flex;
   align-items: center;
