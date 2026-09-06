@@ -121,7 +121,7 @@
 }
 
 /* 등록/수정 모달 */
-.modal-overlay {
+.transactions-page .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -134,7 +134,7 @@
     z-index: 100;
 }
 
-.modal-content {
+.transactions-page .modal-content {
     width: 90%;
     max-width: 400px;
     background: var(--card-bg);
@@ -144,19 +144,19 @@
     text-align: left;
 }
 
-.modal-content h2 {
+.transactions-page .modal-content h2 {
     margin-bottom: 16px;
 }
 
-.modal-content label {
+.transactions-page .modal-content label {
     display: block;
     font-size: 14px;
     margin-bottom: 6px;
     color: var(--text);
 }
 
-.modal-content input,
-.modal-content select {
+.transactions-page .modal-content input,
+.transactions-page .modal-content select {
     width: 100%;
     padding: 10px 12px;
     margin-bottom: 16px;
@@ -167,19 +167,19 @@
     font-size: 15px;
 }
 
-.modal-content input:focus,
-.modal-content select:focus {
+.transactions-page .modal-content input:focus,
+.transactions-page .modal-content select:focus {
     outline: none;
     border-color: var(--accent);
 }
 
-.modal-actions {
+.transactions-page .modal-actions {
     display: flex;
     gap: 8px;
     margin-top: 8px;
 }
 
-.modal-actions button {
+.transactions-page .modal-actions button {
     flex: 1;
     padding: 12px;
     border: none;
@@ -189,29 +189,40 @@
     cursor: pointer;
 }
 
-.modal-actions button[type="submit"] {
+.transactions-page .modal-actions button[type="submit"] {
     background: var(--accent);
     color: #fff;
 }
 
-.modal-actions button[type="submit"]:hover {
+.transactions-page .modal-actions button[type="submit"]:hover {
     background: var(--accent-hover);
 }
 
-.modal-actions button[type="button"] {
+.transactions-page .modal-actions button[type="button"] {
     background: var(--bg);
     color: var(--text-h);
     border: 1px solid var(--border);
 }
 
-.modal-actions button:disabled {
+.transactions-page .modal-actions button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
 /* 에러 메시지 */
-.error-message {
+.transactions-page .error-message {
     color: var(--error);
     font-size: 13px;
     margin-bottom: 12px;
+}
+
+.transactions-page .modal-actions button.delete-button {
+    background: var(--bg);
+    color: var(--error);
+    border: 1px solid var(--error);
+}
+
+.transactions-page .modal-actions button.delete-button:hover {
+    background: var(--error);
+    color: #fff;
 }

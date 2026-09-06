@@ -46,7 +46,7 @@
 
 **제외**: 관리자 페이지 (1인용 도메인에 부적합, 2차 게시판형 프로젝트로 이관). 순서 변경 이유, 범위 결정 배경은 `docs/decisions.md` 참고.
 
-## 현재 상태 (2026-08-30 기준)
+## 현재 상태 (2026-09-06 기준)
 - [x] JWT/Spring Security 인증 개념 학습 완료 (8단계, `docs/troubleshooting.md` 참고)
 - [x] ①②②-2③ 기능 명세 확정 (`docs/specs.md`)
 - [x] DB 스키마 6개 테이블 설계 + MySQL 실행 검증 완료 (`docs/db-schema.sql`)
@@ -57,7 +57,7 @@
 - [x] `backend/CLAUDE.md` 작성 완료 (패키지 구조/JPA 규칙/코드 스타일/인증 보안, 판단 근거는 `docs/decisions.md` "백엔드 구현 판단" 참고)
 - [x] **①단계(로그인/회원가입, JWT 인증) 전체 완료(2026-08-30)** — 회원가입/로그인/토큰 관리(httpOnly+CSRF)/마이페이지/회원탈퇴(소프트삭제+30일 뒤 하드삭제) 8단계 전부 실동작 검증 완료. 판단 근거는 `docs/decisions.md`, 겪은 버그는 `docs/troubleshooting.md` 참고
 - [ ] ③단계 착수 시 처리 — `UserService.withdraw()`가 비밀번호로만 본인확인해 소셜로그인 사용자는 탈퇴 불가능(`password`가 NULL). "언제 고칠지"는 확정, "어떻게 고칠지"(소셜 사용자 확인 수단)만 ③단계 설계 시점에 결정
-- [ ] **②단계 진행 중** — `feature/transactions` 브랜치(원격 push 완료, 미merge)에서 카테고리 조회 + 거래(Transaction) CRUD 백엔드, 사이드바 레이아웃(`Sidebar`/`Layout`)+거래내역 화면(`TransactionsPage`, 목록/등록/수정) 프론트까지 완료. **삭제 기능만 미완성**(`api/transaction.js`의 `deleteTransaction`은 있으나 `TransactionsPage.jsx`에서 import·호출 안 됨 — `handleDelete` 핸들러, 모달에 삭제 버튼 추가 필요). 이어서 `feature/budgets`, `feature/dashboard` 남음. 판단 근거는 `docs/decisions.md`, 백로그는 아래 참고
+- [ ] **②단계 진행 중** — `feature/transactions` 브랜치(원격 push 완료, 미merge)에서 카테고리 조회 + 거래(Transaction) CRUD 백엔드, 사이드바 레이아웃(`Sidebar`/`Layout`)+거래내역 화면(`TransactionsPage`, 목록/등록/수정/삭제) 프론트까지 전체 완료(2026-09-06). 작업 중 `TransactionsPage.css`가 `MyPage.css`와 동일한 전역 클래스명(`.modal-overlay` 등)을 써서 마이페이지 회원탈퇴 버튼 색상이 깨지던 회귀도 함께 발견해 수정(페이지 wrapper 클래스로 스코프 격리). 이어서 `feature/budgets`, `feature/dashboard` 남음. 판단 근거는 `docs/decisions.md`, 백로그는 아래 참고
 - [ ] (백로그, 급하지 않음) `formCategoryId`/`formAmount` 폼 state를 항상 문자열로 통일, 카테고리 로딩 완료 전 등록 모달 진입 시 select가 빈 목록으로 뜨는 UX, `TransactionRepository`의 동일 날짜 거래 2차 정렬 기준 없음, `getTransactions()` N+1 쿼리 가능성, `month` 파라미터 누락/형식 오류 시 에러 응답이 앱 공통 `ErrorResponse` 형식이 아님
 
 다른 컴퓨터에서 이어갈 때는 `docs/setup.md` 체크리스트부터 확인.

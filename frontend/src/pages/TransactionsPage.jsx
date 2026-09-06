@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import './TransactionsPage.css';
-import { getTransactions, createTransaction, updateTransaction } from "../api/transaction";
+import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from "../api/transaction";
 import { getCategories } from "../api/category";
 
 function TransactionsPage() {
@@ -126,6 +126,26 @@ function TransactionsPage() {
         }
     }
 
+    // 거래 삭제
+    async function handleDelete() {
+        if(!window.confirm('정말 삭제하시겠습니까?')) {
+            return;
+        }
+
+        setFormError('');
+        setIsSubmitting(true);
+
+        try {
+            await deleteTransaction(editingTransaction.id);
+            setIsModalOpen(false);
+            refreshTransactions();
+        } catch (error) {
+            setFormError(error.message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
     return (
         <div className="transactions-page">
             <div className="transactions-header">
@@ -195,6 +215,11 @@ function TransactionsPage() {
                         {formError && <p className="error-message">{formError}</p>}
 
                         <div className="modal-actions">
+                            {editingTransaction && (
+                                <button type='button' className='delete-button' onClick={handleDelete} disabled={isSubmitting}>
+                                    {isSubmitting ? '삭제 중 ...' : '삭제'}
+                                </button>
+                            )}
                             <button type="button" onClick={handleModalClose} disabled={isSubmitting}>취소</button>
                             <button type="submit" disabled={isSubmitting}>
                                 {isSubmitting ? '저장 중...' : '저장'}
