@@ -40,39 +40,41 @@ function SignupPage() {
     }
 
     return (
-        <div className="signup-page">
-            <div className="signup-logo">
-                <span className="logo-badge">M</span>
-                <h1>MoneyLog</h1>
-                <p>무료로 시작하세요</p>
+        <div className="auth-layout">
+            <div className="signup-page">
+                <div className="signup-logo">
+                    <span className="logo-badge">M</span>
+                    <h1>MoneyLog</h1>
+                    <p>무료로 시작하세요</p>
+                </div>
+
+                <form className="signup-form" onSubmit={handleSubmit}>
+                    <h2>회원가입</h2>
+
+                    <label>이메일</label>
+                    <input type="email" placeholder="example@email.com" value={email} onChange={(e) => setEmail(e.target.value)}/>
+
+                    <label>닉네임</label>
+                    <input type="text" placeholder="표시될 이름" value={nickname} onChange={(e) => setNickname(e.target.value)}/>
+
+                    <label>비밀번호</label>
+                    <input type="password" placeholder="영문+숫자 조합 8자 이상" value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <p className="password-hint">영문+숫자 조합 8자 이상</p>
+
+                    <label>비밀번호 확인</label>
+                    <input type="password" placeholder="비밀번호 재입력" value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)}/>
+
+                    {error && <p className="error-message">{error}</p>}
+
+                    <button type="submit" disabled={isLoading}>
+                        {isLoading ? '가입 중...' : '회원가입'}
+                    </button>
+                </form>
+
+                <p className="login-link">
+                    이미 계정이 있으신가요? <a href="/login">로그인</a>
+                </p>
             </div>
-
-            <form className="signup-form" onSubmit={handleSubmit}>
-                <h2>회원가입</h2>
-
-                <label>이메일</label>
-                <input type="email" placeholder="example@email.com" value={email} onChange={(e) => setEmail(e.target.value)}/>
-
-                <label>닉네임</label>
-                <input type="text" placeholder="표시될 이름" value={nickname} onChange={(e) => setNickname(e.target.value)}/>
-
-                <label>비밀번호</label>
-                <input type="password" placeholder="영문+숫자 조합 8자 이상" value={password} onChange={(e) => setPassword(e.target.value)} />
-                <p className="password-hint">영문+숫자 조합 8자 이상</p>
-
-                <label>비밀번호 확인</label>
-                <input type="password" placeholder="비밀번호 재입력" value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)}/>
-
-                {error && <p className="error-message">{error}</p>}
-
-                <button type="submit" disabled={isLoading}>
-                    {isLoading ? '가입 중...' : '회원가입'}
-                </button>
-            </form>
-
-            <p className="login-link">
-                이미 계정이 있으신가요? <a href="/login">로그인</a>
-            </p>
         </div>
     )
 }

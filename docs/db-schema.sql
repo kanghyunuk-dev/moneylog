@@ -72,6 +72,7 @@ CREATE TABLE transaction (
     transaction_date DATE     NOT NULL,
     memo             VARCHAR(200) NULL,
     created_at       DATETIME NOT NULL,
+    updated_at       DATETIME NOT NULL,
     CONSTRAINT fk_transaction_user
         FOREIGN KEY (user_id) REFERENCES users(id)
         ON DELETE CASCADE
@@ -128,7 +129,7 @@ CREATE TABLE goal (
 
 -- ============================================================
 -- Category 시드 데이터
--- 지출 9개 + 수입 5개 (docs/specs.md "②단계" 확정 목록)
+-- 지출 10개 + 수입 5개 (docs/specs.md "②단계" 확정 목록)
 -- ============================================================
 INSERT INTO category (name, type) VALUES
     ('식비', 'EXPENSE'),

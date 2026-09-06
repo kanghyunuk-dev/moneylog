@@ -37,37 +37,39 @@ function LoginPage() {
     }
 
     return (
-        <div className="login-page">
-            <div className="login-logo">
-                <span className="logo-badge">M</span>
-                <h1>MoneyLog</h1>
-                <p>나만의 가계부를 시작해보세요</p>
+        <div className="auth-layout">
+            <div className="login-page">
+                <div className="login-logo">
+                    <span className="logo-badge">M</span>
+                    <h1>MoneyLog</h1>
+                    <p>나만의 가계부를 시작해보세요</p>
+                </div>
+
+                <form className="login-form" onSubmit={handleSubmit}>
+                    <h2>로그인</h2>
+
+                    <label>이메일</label>
+                    <input type="email" placeholder="example@email.com" value={email} onChange={(e) => setEmail(e.target.value)}/>
+
+                    <label>비밀번호</label>
+                    <input type="password" placeholder="비밀번호 입력" value={password} onChange={(e) => setPassword(e.target.value)}/>
+
+                    {/* error 빈문자열이 아니면 error 보임*/}
+                    {error && <p className="error-message">{error}</p>}
+
+                    <button type="submit" disabled={isLoading}>{isLoading ? '로그인 중...' : '로그인'}</button>
+
+                    <div className="divider">또는</div>
+
+                    <button type="button" className="google-button">
+                        G 구글로 로그인
+                    </button>
+                </form>
+
+                <p className="signup-link">
+                    계정이 없으신가요? <a href="/signup">회원가입</a>
+                </p>
             </div>
-
-            <form className="login-form" onSubmit={handleSubmit}>
-                <h2>로그인</h2>
-
-                <label>이메일</label>
-                <input type="email" placeholder="example@email.com" value={email} onChange={(e) => setEmail(e.target.value)}/>
-
-                <label>비밀번호</label>
-                <input type="password" placeholder="비밀번호 입력" value={password} onChange={(e) => setPassword(e.target.value)}/>
-
-                {/* error 빈문자열이 아니면 error 보임*/}
-                {error && <p className="error-message">{error}</p>}
-
-                <button type="submit" disabled={isLoading}>{isLoading ? '로그인 중...' : '로그인'}</button>
-
-                <div className="divider">또는</div>
-
-                <button type="button" className="google-button">
-                    G 구글로 로그인
-                </button>
-            </form>
-
-            <p className="signup-link">
-                계정이 없으신가요? <a href="/signup">회원가입</a>
-            </p>
         </div>
     );
 }
