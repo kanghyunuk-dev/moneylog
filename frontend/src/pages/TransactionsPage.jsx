@@ -12,6 +12,7 @@ function TransactionsPage() {
 
     const [transactions, setTransactions] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -48,7 +49,8 @@ function TransactionsPage() {
     useEffect(() => {
         getCategories()
             .then((data) => setCategories(data))
-            .catch(() => setCategories([]));
+            .catch(() => setCategories([]))
+            .finally(() => setIsCategoriesLoading(false));
     }, [])
 
     // 이전/다음 달 이동
@@ -84,8 +86,8 @@ function TransactionsPage() {
     // 수정 모달 열기 (기존 값 채움)
     function handleEditStart(transaction) {
         setEditingTransaction(transaction);
-        setFormCategoryId(transaction.categoryId);
-        setFormAmount(transaction.amount);
+        setFormCategoryId(String(transaction.categoryId));
+        setFormAmount(String(transaction.amount));
         setFormDate(transaction.transactionDate);
         setFormMemo(transaction.memo ?? '');
         setFormError('');
@@ -153,7 +155,9 @@ function TransactionsPage() {
                     <h1>거래내역</h1>
                     <p>수입과 지출을 한눈에</p>
                 </div>
-                <button type="button" className="add-button" onClick={handleAddStart}>+ 거래 추가</button>
+                <button type="button" className="add-button" onClick={handleAddStart} disabled={isCategoriesLoading}>
+                    {isCategoriesLoading ? '불러오는 중...' : '+ 거래 추가'}
+                </button>
             </div>
 
             <div className="month-nav">

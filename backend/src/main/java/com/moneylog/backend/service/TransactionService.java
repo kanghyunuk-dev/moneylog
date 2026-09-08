@@ -46,7 +46,7 @@ public class TransactionService {
         LocalDate end = month.atEndOfMonth();
 
         return transactionRepository
-                .findByUserAndTransactionDateBetweenOrderByTransactionDateDesc(user, start, end)
+                .findByUserAndTransactionDateBetweenOrderByTransactionDateDescIdDesc(user, start, end)
                 .stream()
                 .map(TransactionResponse::from)
                 .toList();

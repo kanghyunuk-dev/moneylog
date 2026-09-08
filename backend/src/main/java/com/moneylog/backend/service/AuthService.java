@@ -12,6 +12,7 @@ import com.moneylog.backend.exception.InvalidCredentialsException;
 import com.moneylog.backend.exception.InvalidTokenException;
 import com.moneylog.backend.repository.RefreshTokenRepository;
 import com.moneylog.backend.repository.UserRepository;
+import com.moneylog.backend.security.JWTProperties;
 import com.moneylog.backend.security.JWTTokenProvider;
 import com.moneylog.backend.security.PrincipalDetails;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Service
@@ -35,6 +37,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JWTTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final JWTProperties jwtProperties;
 
     @Transactional
     public UserResponse register(RegisterRequest request) {
@@ -84,7 +87,7 @@ public class AuthService {
     }
 
     private void updateRefreshToken(User user, String newRefreshToken) {
-        LocalDateTime expiresAt = LocalDateTime.now().plusDays(7);
+        LocalDateTime expiresAt = LocalDateTime.now().plus(Duration.ofMillis(jwtProperties.getRefreshTokenExpiration()));
 
         refreshTokenRepository.findByUser(user)
                 .ifPresentOrElse(
