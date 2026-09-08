@@ -1,7 +1,7 @@
 import './LoginPage.css';
 import { useState } from "react";
 import { useAuth } from "../context/useAuth";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { loginRequest } from "../api/auth";
 
 function LoginPage() {
@@ -67,7 +67,7 @@ function LoginPage() {
                 </form>
 
                 <p className="signup-link">
-                    계정이 없으신가요? <a href="/signup">회원가입</a>
+                    계정이 없으신가요? <Link to="/signup">회원가입</Link>
                 </p>
             </div>
         </div>

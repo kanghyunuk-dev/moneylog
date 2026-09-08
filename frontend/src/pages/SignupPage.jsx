@@ -1,7 +1,7 @@
 import './SignupPage.css';
 import { useState } from "react";
 import { registerRequest } from "../api/auth";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 function SignupPage() {
     const [email, setEmail] = useState('');
@@ -72,7 +72,7 @@ function SignupPage() {
                 </form>
 
                 <p className="login-link">
-                    이미 계정이 있으신가요? <a href="/login">로그인</a>
+                    이미 계정이 있으신가요? <Link to="/login">로그인</Link>
                 </p>
             </div>
         </div>

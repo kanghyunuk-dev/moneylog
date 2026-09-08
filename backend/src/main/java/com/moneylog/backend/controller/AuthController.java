@@ -8,6 +8,7 @@ import com.moneylog.backend.dto.response.TokenResponse;
 import com.moneylog.backend.dto.response.UserResponse;
 import com.moneylog.backend.exception.InvalidTokenException;
 import com.moneylog.backend.security.CookieUtils;
+import com.moneylog.backend.security.JWTProperties;
 import com.moneylog.backend.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -28,6 +29,7 @@ import java.time.Duration;
 public class AuthController {
 
     private final AuthService authService;
+    private final JWTProperties jwtProperties;
 
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -39,8 +41,8 @@ public class AuthController {
     public ResponseEntity<Void> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         TokenResponse tokens = authService.login(request);
 
-        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("accessToken", tokens.accessToken(), Duration.ofMinutes(30)).toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("refreshToken", tokens.refreshToken(), Duration.ofDays(7)).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("accessToken", tokens.accessToken(), Duration.ofMillis(jwtProperties.getAccessTokenExpiration())).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("refreshToken", tokens.refreshToken(), Duration.ofMillis(jwtProperties.getRefreshTokenExpiration())).toString());
 
         return ResponseEntity.ok().build();
     }
@@ -53,7 +55,7 @@ public class AuthController {
 
         TokenResponse tokens = authService.refresh(new RefreshTokenRequest(refreshToken));
 
-        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("accessToken", tokens.accessToken(), Duration.ofMinutes(30)).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("accessToken", tokens.accessToken(), Duration.ofMillis(jwtProperties.getAccessTokenExpiration())).toString());
 
         return ResponseEntity.ok().build();
     }
