@@ -31,7 +31,7 @@
 - **카테고리** (고정 목록, CRUD 없음 — `GET /api/categories`로 조회만):
   - 지출(10개): 식비, 교통비, 주거비, 통신비, 문화/여가, 의료/건강, 쇼핑, 교육, 경조사/선물, 기타
   - 수입(5개): 급여, 용돈, 부수입, 금융소득, 기타
-- **예산 설정**: 카테고리별 월 예산 입력, 예산 대비 실제 지출 비교(진행률 바). `POST /api/budgets`, `GET /api/budgets?month=2026-07`, `PUT /api/budgets/{id}`
+- **예산 설정/해제**: 카테고리별 월 예산 입력, 예산 대비 실제 지출 비교(진행률 바). `POST /api/budgets`, `GET /api/budgets?month=2026-07`, `PUT /api/budgets/{id}`, `DELETE /api/budgets/{id}`
 - **대시보드**: 백엔드가 집계해서 내려줌.
   - `GET /api/dashboard/summary?month=2026-07` → 이번 달 총수입/총지출/순액, 전월 대비 증감률 포함
   - `GET /api/dashboard/category-breakdown?month=2026-07` → 카테고리별 지출 합계 (파이차트용), 가장 많이 지출한 카테고리 포함

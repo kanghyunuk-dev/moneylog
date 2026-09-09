@@ -14,7 +14,7 @@
 
 ## 코드 스타일
 - Entity: `@Getter` + 필요한 것만(`@ToString(exclude=연관관계)`, `@EqualsAndHashCode(of="id")`) + `@NoArgsConstructor(PROTECTED)` + `@Builder`. `@Data`/setter 금지 — 상태 변경은 `changePassword()`처럼 의도가 담긴 메서드로만.
-- DTO: Java `record` 사용, 필드 많으면 `@Builder` 추가. `dto/request`/`dto/response`로 폴더 분리.
+- DTO: Java `record` 사용, 필드 많으면 `@Builder` 추가. `dto/request`/`dto/response`로 폴더 분리. 등록/수정에 필요한 필드가 같으면 DTO 하나 공유(`TransactionRequest`), 다르면 분리(`BudgetCreateRequest`/`BudgetUpdateRequest`) — 공유 시 검증 규칙이 두 상황에 안 맞을 위험이 있으면 분리.
 - 생성자 주입만 사용(필드 `@Autowired` 금지) — 생성자가 하나면 Spring이 자동 인식해 `@Autowired` 생략 가능.
 
 ## 인증/보안

@@ -87,6 +87,7 @@ DB 설계(위 섹션)가 정해진 뒤, 그걸 JPA 코드로 어떻게 다룰지
 - **`UserCleanupScheduler`를 `service`가 아닌 별도 `scheduler` 패키지로 분리(2026-08-29)**: "특정 도메인에 안 속하는 횡단 관심사는 별도 폴더로 분리"라는 패키지 구조 원칙을 스케줄러에도 적용 — 비즈니스 로직 제공자(`@Service`)가 아니라 주기적으로 실행되는 작업 단위(`@Component`)라는 점에서 성격이 다름.
 - **`AuthService.refresh()`에도 탈퇴 여부 체크 추가(2026-08-29)**: 로그인 시점과 매 요청 인가에서만 확인하던 탈퇴 여부를, RefreshToken 유효기간만 보던 `refresh()`에도 추가 — 탈퇴 계정이 새 AccessToken을 계속 발급받을 수 있는 경로를 막음(Auth0/Cognito 등도 계정 비활성화 시 즉시 토큰 revoke가 표준).
 - **거래 조회 N+1은 `fetch join`으로 해결, `@EntityGraph`는 보류(2026-09-08)**: `findByUserAndTransactionDateBetween...`에 `JOIN FETCH t.category` 추가. 지금은 페이징이 없어 `@Query`로 충분 — 페이징 도입 시 `fetch join`은 카운트 쿼리를 따로 관리해야 하는 문제가 있어, 그때 파생 메서드에 붙이기만 하면 되는 `@EntityGraph`로 재검토.
+- **`Budget` 등록/수정 요청 DTO는 분리(`BudgetCreateRequest`/`BudgetUpdateRequest`), `Transaction`은 계속 공유(2026-09-09)**: `TransactionRequest`는 등록·수정에 필요한 필드가 완전히 같아 공유해도 검증 규칙이 안 어긋남. `Budget`은 수정이 금액만 바꾸는데(`Budget.update(Long amount)`) 등록은 카테고리·월·금액이 다 필요해, 하나의 DTO로 공유하면 수정 시 불필요한 필드까지 `@NotNull`로 요구하거나 등록 시 검증이 약해지는 문제가 생김 — "등록/수정 필드가 같으면 공유, 다르면 분리"가 기준.
 
 ## 프론트엔드 구현 판단
 
