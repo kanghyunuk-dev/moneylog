@@ -9,16 +9,18 @@ public record BudgetResponse(
         String categoryName,
         CategoryType categoryType,
         String budgetMonth,
-        Long amount
+        Long amount,
+        Long spentAmount
 ) {
-    public static BudgetResponse from(Budget budget) {
+    public static BudgetResponse from(Budget budget, Long spentAmount) {
         return new BudgetResponse(
                 budget.getId(),
                 budget.getCategory().getId(),
                 budget.getCategory().getName(),
                 budget.getCategory().getType(),
                 budget.getBudgetMonth(),
-                budget.getAmount()
+                budget.getAmount(),
+                spentAmount
         );
     }
 }

@@ -3,6 +3,7 @@ package com.moneylog.backend.service;
 import com.moneylog.backend.dto.request.BudgetCreateRequest;
 import com.moneylog.backend.dto.request.BudgetUpdateRequest;
 import com.moneylog.backend.dto.response.BudgetResponse;
+import com.moneylog.backend.dto.response.CategorySpendingSummary;
 import com.moneylog.backend.entity.Budget;
 import com.moneylog.backend.entity.Category;
 import com.moneylog.backend.entity.User;
@@ -11,17 +12,23 @@ import com.moneylog.backend.exception.CategoryNotFoundException;
 import com.moneylog.backend.exception.DuplicateBudgetException;
 import com.moneylog.backend.repository.BudgetRepository;
 import com.moneylog.backend.repository.CategoryRepository;
+import com.moneylog.backend.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class BudgetService {
     private final BudgetRepository budgetRepository;
     private final CategoryRepository categoryRepository;
+    private final TransactionRepository transactionRepository;
 
     @Transactional
     public BudgetResponse createBudget(User user, BudgetCreateRequest request) {
@@ -40,32 +47,53 @@ public class BudgetService {
                 .build();
 
         Budget saved = budgetRepository.save(budget);
-        return BudgetResponse.from(saved);
+        Long spentAmount = getSpentAmount(user, saved.getCategory().getId(), request.budgetMonth());
+        return BudgetResponse.from(saved, spentAmount);
     }
 
     @Transactional(readOnly = true)
     public List<BudgetResponse> getBudgets(User user, String budgetMonth) {
+        YearMonth month = YearMonth.parse(budgetMonth);
+        LocalDate start = month.atDay(1);
+        LocalDate end = month.atEndOfMonth();
+
+        Map<Long, Long> spentByCategory = transactionRepository.sumAmountByCategoryForMonth(user, start, end)
+                .stream()
+                .collect(Collectors.toMap(CategorySpendingSummary::categoryId, CategorySpendingSummary::totalAmount));
+
         return budgetRepository.findByUserAndBudgetMonth(user, budgetMonth)
                 .stream()
-                .map(BudgetResponse::from)
+                .map(budget -> BudgetResponse.from(budget, spentByCategory.getOrDefault(budget.getCategory().getId(), 0L)))
                 .toList();
     }
 
     @Transactional
     public BudgetResponse updateBudget(User user, Long budgetId, BudgetUpdateRequest request) {
         Budget budget = budgetRepository.findByIdAndUser(budgetId, user)
-                .orElseThrow(() -> new BudgetNotFoundException("존재하지 않는 예산입니다"));
+                .orElseThrow(() -> new BudgetNotFoundException("존재하지 않는 예산 입니다"));
 
         budget.update(request.amount());
 
-        return BudgetResponse.from(budget);
+        Long spentAmount = getSpentAmount(user, budget.getCategory().getId(), YearMonth.parse(budget.getBudgetMonth()));
+        return BudgetResponse.from(budget, spentAmount);
     }
 
     @Transactional
     public void deleteBudget(User user, Long budgetId) {
         Budget budget = budgetRepository.findByIdAndUser(budgetId, user)
-                .orElseThrow(() -> new BudgetNotFoundException("존재하지 않는 예산입니다"));
+                .orElseThrow(() -> new BudgetNotFoundException("존재하지 않는 예산 입니다"));
 
         budgetRepository.delete(budget);
+    }
+
+    private Long getSpentAmount(User user, Long categoryId, YearMonth month) {
+        LocalDate start = month.atDay(1);
+        LocalDate end = month.atEndOfMonth();
+
+        return transactionRepository.sumAmountByCategoryForMonth(user, start, end).stream()
+                .filter(summary -> summary.categoryId().equals(categoryId))
+                .map(CategorySpendingSummary::totalAmount)
+                .findFirst()
+                .orElse(0L);
     }
 }
