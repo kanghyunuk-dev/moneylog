@@ -1,5 +1,6 @@
 package com.moneylog.backend.repository;
 
+import com.moneylog.backend.dto.response.CategorySpendingSummary;
 import com.moneylog.backend.entity.Transaction;
 import com.moneylog.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,5 +17,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByUserAndTransactionDateBetweenOrderByTransactionDateDescIdDesc(@Param("user") User user, @Param("start") LocalDate start, @Param("end") LocalDate end);
 
     Optional<Transaction> findByIdAndUser(Long id, User user);
+
+    @Query("SELECT new com.moneylog.backend.dto.response.CategorySpendingSummary(t.category.id, SUM(t.amount)) " +
+            "FROM Transaction t WHERE t.user = :user AND t.transactionDate BETWEEN :start AND :end " +
+            "GROUP BY t.category.id")
+    List<CategorySpendingSummary> sumAmountByCategoryForMonth(@Param("user") User user, @Param("start") LocalDate start, @Param("end") LocalDate end);
 
 }

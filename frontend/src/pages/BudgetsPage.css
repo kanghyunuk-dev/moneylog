@@ -1,0 +1,284 @@
+.budgets-page {
+    width: 100%;
+}
+
+.budgets-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.budgets-header h1 {
+    font-size: 28px;
+    margin-bottom: 4px;
+}
+
+.budgets-header p {
+    color: var(--text);
+    font-size: 15px;
+}
+
+.budgets-page .add-button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.budgets-page .add-button:hover {
+    background: var(--accent-hover);
+}
+
+.budgets-page .add-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 월 네비게이션 */
+.budgets-page .month-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 24px;
+}
+
+.budgets-page .month-nav button {
+    border: none;
+    background: transparent;
+    color: var(--text-h);
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.budgets-page .month-nav span {
+    font-weight: 600;
+    color: var(--text-h);
+    min-width: 90px;
+}
+
+/* 상단 요약 카드 */
+.budgets-page .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.budgets-page .summary-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.budgets-page .summary-label {
+    color: var(--text);
+    font-size: 13px;
+}
+
+.budgets-page .summary-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-h);
+}
+
+.budgets-page .summary-value.over {
+    color: var(--error);
+}
+
+/* 예산 목록 */
+.budgets-page .budget-item {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    cursor: pointer;
+}
+
+.budgets-page .budget-item:hover {
+    border-color: var(--accent-border);
+}
+
+.budgets-page .budget-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.budgets-page .budget-category {
+    font-weight: 600;
+    color: var(--text-h);
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.budgets-page .over-badge {
+    background: var(--error);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.budgets-page .budget-amount {
+    font-size: 14px;
+    color: var(--text);
+}
+
+.budgets-page .budget-amount.over {
+    color: var(--error);
+    font-weight: 600;
+}
+
+.budgets-page .progress-track {
+    width: 100%;
+    height: 8px;
+    background: var(--bg);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.budgets-page .progress-fill {
+    height: 100%;
+    background: var(--success);
+    border-radius: 999px;
+}
+
+.budgets-page .progress-fill.over {
+    background: var(--error);
+}
+
+.budgets-page .empty-message {
+    color: var(--text);
+    font-size: 14px;
+    padding: 40px 0;
+}
+
+/* 등록/수정 모달 */
+.budgets-page .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.budgets-page .modal-content {
+    width: 90%;
+    max-width: 400px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 24px;
+    text-align: left;
+}
+
+.budgets-page .modal-content h2 {
+    margin-bottom: 16px;
+}
+
+.budgets-page .modal-content label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: var(--text);
+}
+
+.budgets-page .modal-content input,
+.budgets-page .modal-content select {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text-h);
+    font-size: 15px;
+}
+
+.budgets-page .modal-content input:focus,
+.budgets-page .modal-content select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.budgets-page .modal-content select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.budgets-page .modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.budgets-page .modal-actions button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.budgets-page .modal-actions button[type="submit"] {
+    background: var(--accent);
+    color: #fff;
+}
+
+.budgets-page .modal-actions button[type="submit"]:hover {
+    background: var(--accent-hover);
+}
+
+.budgets-page .modal-actions button[type="button"] {
+    background: var(--bg);
+    color: var(--text-h);
+    border: 1px solid var(--border);
+}
+
+.budgets-page .modal-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.budgets-page .modal-actions button.delete-button {
+    background: var(--bg);
+    color: var(--error);
+    border: 1px solid var(--error);
+}
+
+.budgets-page .modal-actions button.delete-button:hover {
+    background: var(--error);
+    color: #fff;
+}
+
+/* 에러 메시지 */
+.budgets-page .error-message {
+    color: var(--error);
+    font-size: 13px;
+    margin-bottom: 12px;
+}
