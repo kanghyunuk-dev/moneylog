@@ -88,6 +88,8 @@ DB 설계(위 섹션)가 정해진 뒤, 그걸 JPA 코드로 어떻게 다룰지
 - **`AuthService.refresh()`에도 탈퇴 여부 체크 추가(2026-08-29)**: 로그인 시점과 매 요청 인가에서만 확인하던 탈퇴 여부를, RefreshToken 유효기간만 보던 `refresh()`에도 추가 — 탈퇴 계정이 새 AccessToken을 계속 발급받을 수 있는 경로를 막음(Auth0/Cognito 등도 계정 비활성화 시 즉시 토큰 revoke가 표준).
 - **거래 조회 N+1은 `fetch join`으로 해결, `@EntityGraph`는 보류(2026-09-08)**: `findByUserAndTransactionDateBetween...`에 `JOIN FETCH t.category` 추가. 지금은 페이징이 없어 `@Query`로 충분 — 페이징 도입 시 `fetch join`은 카운트 쿼리를 따로 관리해야 하는 문제가 있어, 그때 파생 메서드에 붙이기만 하면 되는 `@EntityGraph`로 재검토.
 - **`Budget` 등록/수정 요청 DTO는 분리(`BudgetCreateRequest`/`BudgetUpdateRequest`), `Transaction`은 계속 공유(2026-09-09)**: `TransactionRequest`는 등록·수정에 필요한 필드가 완전히 같아 공유해도 검증 규칙이 안 어긋남. `Budget`은 수정이 금액만 바꾸는데(`Budget.update(Long amount)`) 등록은 카테고리·월·금액이 다 필요해, 하나의 DTO로 공유하면 수정 시 불필요한 필드까지 `@NotNull`로 요구하거나 등록 시 검증이 약해지는 문제가 생김 — "등록/수정 필드가 같으면 공유, 다르면 분리"가 기준.
+- **저축률은 -100~100%로 클램핑(2026-09-14)**: `순액÷수입×100` 공식은 수입이 지출보다 훨씬 작을 때(예: 이번 달 수입 5만원, 지출 56만원) `-1020%` 같은 의미 없는 극단값을 만듦 — 적자라는 사실 자체는 음수로 계속 보여주되(정직한 신호), 그 크기가 더 이상 정보를 안 주는 지점(±100%)에서 잘라 화면이 깨져 보이지 않게 함.
+- **차트는 Recharts 사용(2026-09-14)**: Chart.js는 대량 데이터용 Canvas 기반이라 지금 규모(6개월·카테고리 15개 이하)엔 과하고 `react-chartjs-2` 래퍼도 필요. Nivo는 차트 종류가 다양하지만 파이+막대만 필요한 지금엔 과한 스펙. Recharts는 React 전용이라 래퍼 없이 JSX로 바로 조립되어 채택.
 
 ## 프론트엔드 구현 판단
 

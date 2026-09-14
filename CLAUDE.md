@@ -38,7 +38,7 @@
 | 단계 | 기능 | 목적 | 상태 |
 |---|---|---|---|
 | ① | 로그인/회원가입(JWT) | 인증 기초 — JWT 기반 인증 구조 설계 및 구현 | 완료(`feature/auth`) |
-| ② | 거래/예산/카테고리/대시보드 | React+Spring Boot 기초(폼, API 연동, JPA, 상태관리) 체화 | 예정 |
+| ② | 거래/예산/카테고리/대시보드 | React+Spring Boot 기초(폼, API 연동, JPA, 상태관리) 체화 | 완료 |
 | ②-2 | 목표자산(Goal) | ②단계 완료 후 확장 | 예정 |
 | ③ | 소셜로그인(구글) | OAuth2 기반 인증 확장 학습 | 예정 |
 | ④ | Redis 연동 | 세션/토큰 캐시 관리, JWT 무상태성 트레이드오프 최적화 | 예정 |
@@ -57,7 +57,7 @@
 - [x] `backend/CLAUDE.md` 작성 완료 (패키지 구조/JPA 규칙/코드 스타일/인증 보안, 판단 근거는 `docs/decisions.md` "백엔드 구현 판단" 참고)
 - [x] **①단계(로그인/회원가입, JWT 인증) 전체 완료(2026-08-30)** — 회원가입/로그인/토큰 관리(httpOnly+CSRF)/마이페이지/회원탈퇴(소프트삭제+30일 뒤 하드삭제) 8단계 전부 실동작 검증 완료. 판단 근거는 `docs/decisions.md`, 겪은 버그는 `docs/troubleshooting.md` 참고
 - [ ] ③단계 착수 시 처리 — `UserService.withdraw()`가 비밀번호로만 본인확인해 소셜로그인 사용자는 탈퇴 불가능(`password`가 NULL). "언제 고칠지"는 확정, "어떻게 고칠지"(소셜 사용자 확인 수단)만 ③단계 설계 시점에 결정
-- [ ] **②단계 진행 중** — 거래/예산까지 `develop`에 병합 완료(v0.3.0, v0.4.0). `feature/dashboard`(통계 API 3개 summary/category-breakdown/monthly-trend + `DashboardPage` 화면, Recharts 도입)도 백엔드/프론트 전부 완성, 브라우저 실동작 검증 완료(2026-09-14, 커밋 전). ②단계 마지막 조각까지 끝났고, 이어서 ②-2단계(목표자산) 남음. 판단 근거는 `docs/decisions.md` 참고
+- [x] **②단계(거래/예산/카테고리/대시보드) 전체 완료(2026-09-14)** — 거래/예산/통계 API+화면 전부 `develop`에 병합 완료(v0.3.0~v0.5.0). 판단 근거는 `docs/decisions.md` 참고. 이어서 ②-2단계(목표자산)에서 "홈" 화면도 같이 완성 예정(요약 카드+최근 거래+목표 위젯)
 - [x] `bugfix/backlog-cleanup` 브랜치에서 백로그 정리 완료(2026-09-08) — 폼 state 문자열 통일, 카테고리 로딩 중 등록 모달 버튼 비활성화, `TransactionRepository` 동일 날짜 2차 정렬(`id`), `getTransactions()` N+1(fetch join), `month` 파라미터 에러 응답 형식 통일. 겸사겸사 로그인/회원가입 `<a href>`→`Link` 전환, JWT 만료시간 하드코딩 제거(`JWTProperties` 실제 주입)도 같이 처리. 판단 근거는 `docs/decisions.md` 참고
 - [ ] (백로그, 급하지 않음) `GlobalExceptionHandler`의 프레임워크 예외 핸들러가 계속 늘어나면 `ResponseEntityExceptionHandler` 상속으로 전환 검토
 

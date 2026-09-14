@@ -8,6 +8,7 @@
 - 색상/간격/폰트는 `index.css`의 `:root` CSS 변수로 토큰화하고 `@media (prefers-color-scheme: dark)`로 다크모드 오버라이드(`design-reference`에 라이트/다크 쌍이 있으므로 처음부터 변수 기반으로 짤 것).
 - 디자인 기준은 `docs/design-reference/`의 스크린샷 — 코드 복사가 아니라 레이아웃·간격·색을 보고 새로 작성.
 - CSS Modules 없이 순수 CSS라 클래스명이 파일 간에 전역으로 부딪힐 수 있음 — `.modal-*`/`.error-message`처럼 여러 화면에서 재사용될 이름은 처음부터 각 페이지의 최상위 wrapper 클래스(`.mypage`, `.transactions-page` 등) 아래 후손 선택자로 작성할 것(판단 근거는 `docs/decisions.md` "프론트엔드 구현 판단" 참고).
+- 차트는 Recharts 사용 — 판단 근거는 `docs/decisions.md` 참고.
 
 ## 상태 관리 — 별도 라이브러리 없이 React Context
 - 지금 전역 상태로 볼 만한 건 로그인 여부/사용자 정보 정도뿐. 거래·예산·대시보드 데이터는 각 페이지가 API로 그때그때 가져오는 서버 상태라 전역 상태가 아님.
