@@ -1,6 +1,7 @@
 package com.moneylog.backend.repository;
 
 import com.moneylog.backend.dto.response.CategorySpendingSummary;
+import com.moneylog.backend.dto.response.TypeSpendingSummary;
 import com.moneylog.backend.entity.Transaction;
 import com.moneylog.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,5 +23,19 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             "FROM Transaction t WHERE t.user = :user AND t.transactionDate BETWEEN :start AND :end " +
             "GROUP BY t.category.id")
     List<CategorySpendingSummary> sumAmountByCategoryForMonth(@Param("user") User user, @Param("start") LocalDate start, @Param("end") LocalDate end);
+
+    @Query("SELECT new com.moneylog.backend.dto.response.TypeSpendingSummary(t.category.type, SUM(t.amount)) " +
+            "FROM Transaction t WHERE t.user = :user AND t.transactionDate BETWEEN :start AND :end " +
+            "GROUP BY t.category.type")
+    List<TypeSpendingSummary> sumAmountByTypeForMonth(@Param("user") User user, @Param("start") LocalDate start, @Param("end") LocalDate end);
+
+    @Query("SELECT new com.moneylog.backend.dto.response.CategorySpendingSummary(t.category.id, SUM(t.amount)) " +
+            "FROM Transaction t WHERE t.user = :user AND t.category.type = 'EXPENSE' AND t.transactionDate BETWEEN :start AND :end " +
+            "GROUP BY t.category.id")
+    List<CategorySpendingSummary> sumExpenseByCategoryForMonth(@Param("user") User user, @Param("start") LocalDate start, @Param("end") LocalDate end);
+
+    @Query("SELECT t FROM Transaction t JOIN FETCH t.category WHERE t.user = :user AND t.transactionDate BETWEEN :start AND :end")
+    List<Transaction> findAllForTrend(@Param("user") User user, @Param("start") LocalDate start, @Param("end") LocalDate end);
+
 
 }

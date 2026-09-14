@@ -7,6 +7,7 @@ import MyPage from "./pages/MyPage";
 import Layout from "./components/Layout";
 import TransactionsPage from "./pages/TransactionsPage";
 import BudgetsPage from "./pages/BudgetsPage";
+import DashboardPage from "./pages/DashboardPage";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/mypage" element={<MyPage/>} />
         <Route path="/transactions" element={<TransactionsPage/>} />
         <Route path="/budgets" element={<BudgetsPage/>} />
+        <Route path="/dashboard" element={<DashboardPage/>} />
       </Route>
     </Routes>
   );
