@@ -39,14 +39,14 @@
 |---|---|---|---|
 | ① | 로그인/회원가입(JWT) | 인증 기초 — JWT 기반 인증 구조 설계 및 구현 | 완료(`feature/auth`) |
 | ② | 거래/예산/카테고리/대시보드 | React+Spring Boot 기초(폼, API 연동, JPA, 상태관리) 체화 | 완료 |
-| ②-2 | 목표자산(Goal) | ②단계 완료 후 확장 | 예정 |
+| ②-2 | 목표자산(Goal) | ②단계 완료 후 확장 | 완료 |
 | ③ | 소셜로그인(구글) | OAuth2 기반 인증 확장 학습 | 예정 |
 | ④ | Redis 연동 | 세션/토큰 캐시 관리, JWT 무상태성 트레이드오프 최적화 | 예정 |
 | ⑤ | 환율 API 연동(선택) | 외부 REST API 연동 실무 경험 | 선택 |
 
 **제외**: 관리자 페이지 (1인용 도메인에 부적합, 2차 게시판형 프로젝트로 이관). 순서 변경 이유, 범위 결정 배경은 `docs/decisions.md` 참고.
 
-## 현재 상태 (2026-09-14 기준)
+## 현재 상태 (2026-09-16 기준)
 - [x] JWT/Spring Security 인증 개념 학습 완료 (8단계, `docs/troubleshooting.md` 참고)
 - [x] ①②②-2③ 기능 명세 확정 (`docs/specs.md`)
 - [x] DB 스키마 6개 테이블 설계 + MySQL 실행 검증 완료 (`docs/db-schema.sql`)
@@ -57,7 +57,9 @@
 - [x] `backend/CLAUDE.md` 작성 완료 (패키지 구조/JPA 규칙/코드 스타일/인증 보안, 판단 근거는 `docs/decisions.md` "백엔드 구현 판단" 참고)
 - [x] **①단계(로그인/회원가입, JWT 인증) 전체 완료(2026-08-30)** — 회원가입/로그인/토큰 관리(httpOnly+CSRF)/마이페이지/회원탈퇴(소프트삭제+30일 뒤 하드삭제) 8단계 전부 실동작 검증 완료. 판단 근거는 `docs/decisions.md`, 겪은 버그는 `docs/troubleshooting.md` 참고
 - [ ] ③단계 착수 시 처리 — `UserService.withdraw()`가 비밀번호로만 본인확인해 소셜로그인 사용자는 탈퇴 불가능(`password`가 NULL). "언제 고칠지"는 확정, "어떻게 고칠지"(소셜 사용자 확인 수단)만 ③단계 설계 시점에 결정
-- [x] **②단계(거래/예산/카테고리/대시보드) 전체 완료(2026-09-14)** — 거래/예산/통계 API+화면 전부 `develop`에 병합 완료(v0.3.0~v0.5.0). 판단 근거는 `docs/decisions.md` 참고. 이어서 ②-2단계(목표자산)에서 "홈" 화면도 같이 완성 예정(요약 카드+최근 거래+목표 위젯)
+- [x] **②단계(거래/예산/카테고리/대시보드) 전체 완료(2026-09-14)** — 거래/예산/통계 API+화면 전부 `develop`에 병합 완료(v0.3.0~v0.5.0). 판단 근거는 `docs/decisions.md` 참고
+- [x] **②-2단계(목표자산) API+화면 완료(2026-09-16)** — 목표 CRUD, 활성/대기/완료 상태 전환, 진행률 실시간 계산 전부 구현. 판단 근거는 `docs/decisions.md` 참고
+- [ ] 홈 화면(요약 카드+최근 거래+목표 위젯)은 별도 브랜치로 분리 — `docs/design-reference/03-home.png` 대조 결과 카테고리별 이모지 아이콘 표시가 필요해, 카테고리에 아이콘 필드를 추가하는 설계부터 선행해야 함
 - [x] `bugfix/backlog-cleanup` 브랜치에서 백로그 정리 완료(2026-09-08) — 폼 state 문자열 통일, 카테고리 로딩 중 등록 모달 버튼 비활성화, `TransactionRepository` 동일 날짜 2차 정렬(`id`), `getTransactions()` N+1(fetch join), `month` 파라미터 에러 응답 형식 통일. 겸사겸사 로그인/회원가입 `<a href>`→`Link` 전환, JWT 만료시간 하드코딩 제거(`JWTProperties` 실제 주입)도 같이 처리. 판단 근거는 `docs/decisions.md` 참고
 - [ ] (백로그, 급하지 않음) `GlobalExceptionHandler`의 프레임워크 예외 핸들러가 계속 늘어나면 `ResponseEntityExceptionHandler` 상속으로 전환 검토
 

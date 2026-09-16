@@ -65,6 +65,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(e.getMessage()));
     }
 
+    @ExceptionHandler(GoalNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleGoalNotFound(GoalNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(e.getMessage()));
+    }
+
+    @ExceptionHandler(GoalAlreadyDoneException.class)
+    public ResponseEntity<ErrorResponse> handleGoalAlreadyDone(GoalAlreadyDoneException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(e.getMessage()));
+    }
+
     @ExceptionHandler(DuplicateBudgetException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateBudget(DuplicateBudgetException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(e.getMessage()));

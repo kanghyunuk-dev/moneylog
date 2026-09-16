@@ -121,6 +121,7 @@ CREATE TABLE goal (
     status          VARCHAR(10)  NOT NULL,             -- "ACTIVE" / "WAITING" / "DONE"
     display_order   INT          NOT NULL,
     created_at      DATETIME     NOT NULL,
+    activated_at    DATETIME     NULL,                 -- ACTIVE로 전환된 시각, 진행률 계산 시작 기준점
     CONSTRAINT fk_goal_user
         FOREIGN KEY (user_id) REFERENCES users(id)
         ON DELETE CASCADE
