@@ -93,7 +93,7 @@ public class DashboardService {
     private Map<CategoryType, Long> sumByType(User user, YearMonth month) {
         LocalDate start = month.atDay(1);
         LocalDate end = month.atEndOfMonth();
-        return transactionRepository.sumAmountByTypeForMonth(user, start, end).stream()
+        return transactionRepository.sumAmountByTypeForPeriod(user, start, end).stream()
                 .collect(Collectors.toMap(TypeSpendingSummary::type, TypeSpendingSummary::totalAmount));
     }
 }

@@ -27,7 +27,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("SELECT new com.moneylog.backend.dto.response.TypeSpendingSummary(t.category.type, SUM(t.amount)) " +
             "FROM Transaction t WHERE t.user = :user AND t.transactionDate BETWEEN :start AND :end " +
             "GROUP BY t.category.type")
-    List<TypeSpendingSummary> sumAmountByTypeForMonth(@Param("user") User user, @Param("start") LocalDate start, @Param("end") LocalDate end);
+    List<TypeSpendingSummary> sumAmountByTypeForPeriod(@Param("user") User user, @Param("start") LocalDate start, @Param("end") LocalDate end);
 
     @Query("SELECT new com.moneylog.backend.dto.response.CategorySpendingSummary(t.category.id, SUM(t.amount)) " +
             "FROM Transaction t WHERE t.user = :user AND t.category.type = 'EXPENSE' AND t.transactionDate BETWEEN :start AND :end " +
