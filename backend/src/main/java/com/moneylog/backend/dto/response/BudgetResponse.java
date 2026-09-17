@@ -8,6 +8,7 @@ public record BudgetResponse(
         Long categoryId,
         String categoryName,
         CategoryType categoryType,
+        String categoryIcon,
         String budgetMonth,
         Long amount,
         Long spentAmount
@@ -18,6 +19,7 @@ public record BudgetResponse(
                 budget.getCategory().getId(),
                 budget.getCategory().getName(),
                 budget.getCategory().getType(),
+                budget.getCategory().getIcon(),
                 budget.getBudgetMonth(),
                 budget.getAmount(),
                 spentAmount

@@ -10,7 +10,7 @@
 - `ddl-auto=validate` 고정, 스키마 변경은 `docs/db-schema.sql`을 먼저 고치고 반영한 뒤 Entity를 맞추는 순서.
 - FK 정책은 스키마 그대로 반영(User 참조 CASCADE, Category 참조 RESTRICT).
 - 모든 연관관계 `FetchType.LAZY` 명시(`@ManyToOne`/`@OneToOne`은 기본값이 EAGER라 필수), 필요한 곳만 `fetch join`.
-- 카테고리 사용자 정의 확장(나중 작업)은 `category`에 `user_id` 컬럼 추가하는 안이 유력 후보.
+- 카테고리 사용자 정의 확장(나중 작업)은 `category`에 `user_id` 컬럼 추가하는 안이 유력 후보. 카테고리 아이콘은 이 확장과 별개로 전역 고정값(`category.icon`) — 판단 근거는 `docs/decisions.md` 참고.
 
 ## 코드 스타일
 - Entity: `@Getter` + 필요한 것만(`@ToString(exclude=연관관계)`, `@EqualsAndHashCode(of="id")`) + `@NoArgsConstructor(PROTECTED)` + `@Builder`. `@Data`/setter 금지 — 상태 변경은 `changePassword()`처럼 의도가 담긴 메서드로만.

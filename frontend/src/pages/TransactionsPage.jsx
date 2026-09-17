@@ -178,7 +178,8 @@ function TransactionsPage() {
                             <div className="group-date">{group.date}</div>
                             {group.items.map((item) => (
                                 <div key={item.id} className="transaction-item" onClick={() => handleEditStart(item)}>
-                                    <div>
+                                    <div className="item-icon">{item.categoryIcon}</div>
+                                    <div className="item-info">
                                         <div className="item-memo">{item.memo || item.categoryName}</div>
                                         <div className="item-category">{item.categoryName}</div>
                                     </div>

@@ -56,7 +56,8 @@ CREATE TABLE refresh_token (
 CREATE TABLE category (
     id   BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(30) NOT NULL,
-    type VARCHAR(10) NOT NULL                          -- "INCOME" / "EXPENSE"
+    type VARCHAR(10) NOT NULL,                         -- "INCOME" / "EXPENSE"
+    icon VARCHAR(10) NOT NULL                          -- 이모지, 고정값
 );
 
 -- ============================================================
@@ -132,19 +133,20 @@ CREATE TABLE goal (
 -- Category 시드 데이터
 -- 지출 10개 + 수입 5개 (docs/specs.md "②단계" 확정 목록)
 -- ============================================================
-INSERT INTO category (name, type) VALUES
-    ('식비', 'EXPENSE'),
-    ('교통비', 'EXPENSE'),
-    ('주거비', 'EXPENSE'),
-    ('통신비', 'EXPENSE'),
-    ('문화/여가', 'EXPENSE'),
-    ('의료/건강', 'EXPENSE'),
-    ('쇼핑', 'EXPENSE'),
-    ('교육', 'EXPENSE'),
-    ('경조사/선물', 'EXPENSE'),
-    ('기타', 'EXPENSE'),
-    ('급여', 'INCOME'),
-    ('용돈', 'INCOME'),
-    ('부수입', 'INCOME'),
-    ('금융소득', 'INCOME'),
-    ('기타', 'INCOME');
+INSERT INTO category (name, type, icon) VALUES
+    ('식비', 'EXPENSE', '🍱'),
+    ('교통비', 'EXPENSE', '🚌'),
+    ('주거비', 'EXPENSE', '🏠'),
+    ('통신비', 'EXPENSE', '📱'),
+    ('문화/여가', 'EXPENSE', '🎬'),
+    ('의료/건강', 'EXPENSE', '💊'),
+    ('쇼핑', 'EXPENSE', '👜'),
+    ('교육', 'EXPENSE', '📚'),
+    ('경조사/선물', 'EXPENSE', '🎁'),
+    ('기타', 'EXPENSE', '📦'),
+    ('급여', 'INCOME', '💰'),
+    ('용돈', 'INCOME', '🎀'),
+    ('부수입', 'INCOME', '💼'),
+    ('금융소득', 'INCOME', '📈'),
+    ('기타', 'INCOME', '💵');
+

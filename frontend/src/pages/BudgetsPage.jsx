@@ -189,8 +189,10 @@ function BudgetsPage() {
                             <div key={b.id} className="budget-item" onClick={() => handleEditStart(b)}>
                                 <div className="budget-item-header">
                                     <span className="budget-category">
-                                        {b.categoryName}
-                                        {isOver && <span className="over-badge">초과</span>}
+                                        <span className="budget-category">
+                                            {b.categoryIcon} {b.categoryName}
+                                            {isOver && <span className="over-badge">초과</span>}
+                                        </span>
                                     </span>
                                     <span className={isOver ? 'budget-amount over' : 'budget-amount'}>
                                         {b.spentAmount.toLocaleString()} / {b.amount.toLocaleString()}원 ({percent}%)
