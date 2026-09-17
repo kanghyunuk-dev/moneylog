@@ -28,7 +28,7 @@
 - **거래(수입/지출) 관리**: 단건 기록만 (반복거래·다중통화는 최초 범위에서 제외).
   - 거래 목록 화면: 날짜·카테고리·유형·금액·메모 표시, 최신순 정렬, 월 단위 필터(`GET /api/transactions?month=2026-07`)
   - 거래 등록/수정/삭제: 유형(수입/지출)·카테고리(고정 목록에서 선택)·금액·날짜·메모(선택). `POST /api/transactions`, `PUT /api/transactions/{id}`, `DELETE /api/transactions/{id}`
-- **카테고리** (고정 목록, CRUD 없음 — `GET /api/categories`로 조회만):
+- **카테고리** (고정 목록, CRUD 없음 — `GET /api/categories`로 조회만, 각 카테고리에 고정 아이콘(이모지) 포함):
   - 지출(10개): 식비, 교통비, 주거비, 통신비, 문화/여가, 의료/건강, 쇼핑, 교육, 경조사/선물, 기타
   - 수입(5개): 급여, 용돈, 부수입, 금융소득, 기타
 - **예산 설정/해제**: 카테고리별 월 예산 입력, 예산 대비 실제 지출 비교(진행률 바). `POST /api/budgets`, `GET /api/budgets?month=2026-07`, `PUT /api/budgets/{id}`, `DELETE /api/budgets/{id}`

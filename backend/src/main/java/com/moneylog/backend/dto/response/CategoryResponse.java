@@ -6,9 +6,10 @@ import com.moneylog.backend.entity.CategoryType;
 public record CategoryResponse (
         Long id,
         String name,
-        CategoryType type
+        CategoryType type,
+        String icon
 ) {
     public static CategoryResponse from(Category category) {
-        return new CategoryResponse(category.getId(), category.getName(), category.getType());
+        return new CategoryResponse(category.getId(), category.getName(), category.getType(), category.getIcon());
     }
 }

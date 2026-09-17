@@ -10,6 +10,7 @@ public record TransactionResponse(
         Long categoryId,
         String categoryName,
         CategoryType categoryType,
+        String categoryIcon,
         Long amount,
         LocalDate transactionDate,
         String memo
@@ -20,6 +21,7 @@ public record TransactionResponse(
                 transaction.getCategory().getId(),
                 transaction.getCategory().getName(),
                 transaction.getCategory().getType(),
+                transaction.getCategory().getIcon(),
                 transaction.getAmount(),
                 transaction.getTransactionDate(),
                 transaction.getMemo()

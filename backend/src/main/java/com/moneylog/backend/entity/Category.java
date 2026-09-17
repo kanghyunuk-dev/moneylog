@@ -21,4 +21,7 @@ public class Category {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private CategoryType type;
+
+    @Column(nullable = false, length = 10)
+    private String icon;
 }
