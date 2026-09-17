@@ -60,7 +60,7 @@
 - [x] **②단계(거래/예산/카테고리/대시보드) 전체 완료(2026-09-14)** — 거래/예산/통계 API+화면 전부 `develop`에 병합 완료(v0.3.0~v0.5.0). 판단 근거는 `docs/decisions.md` 참고
 - [x] **②-2단계(목표자산) API+화면 완료(2026-09-16)** — 목표 CRUD, 활성/대기/완료 상태 전환, 진행률 실시간 계산 전부 구현. 판단 근거는 `docs/decisions.md` 참고
 - [x] **카테고리 아이콘(이모지) 도입 완료(2026-09-17)** — `category.icon` 컬럼 추가(고정 15개 매핑), 거래내역/예산 화면에 반영. 판단 근거는 `docs/decisions.md` 참고
-- [ ] 홈 화면(요약 카드+최근 거래+목표 위젯)은 별도 브랜치(`feature/home`)에서 진행 — 레이아웃은 `docs/design-reference/03-home.png` 기준(목표 위젯 최상단 → 요약카드 3열 → 최근거래)
+- [x] **홈 화면 완료(2026-09-17)** — 인사말, 목표 위젯(진행률), 요약 카드 3개, 최근 거래 5건, 바로가기 카드(거래 추가/통계) 구현. 이로써 ②-2단계 전체(목표자산+홈 화면) 마무리
 - [x] `bugfix/backlog-cleanup` 브랜치에서 백로그 정리 완료(2026-09-08) — 폼 state 문자열 통일, 카테고리 로딩 중 등록 모달 버튼 비활성화, `TransactionRepository` 동일 날짜 2차 정렬(`id`), `getTransactions()` N+1(fetch join), `month` 파라미터 에러 응답 형식 통일. 겸사겸사 로그인/회원가입 `<a href>`→`Link` 전환, JWT 만료시간 하드코딩 제거(`JWTProperties` 실제 주입)도 같이 처리. 판단 근거는 `docs/decisions.md` 참고
 - [ ] (백로그, 급하지 않음) `GlobalExceptionHandler`의 프레임워크 예외 핸들러가 계속 늘어나면 `ResponseEntityExceptionHandler` 상속으로 전환 검토
 
