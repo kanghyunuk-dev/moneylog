@@ -86,6 +86,25 @@ public class AuthService {
         return new TokenResponse(accessToken, refreshToken);
     }
 
+    @Transactional
+    public TokenResponse loginWithGoogle(String email, String nickname, String providerId) {
+        User user = userRepository.findByEmail(email)
+                .orElseGet(() -> userRepository.save(
+                        User.builder()
+                                .email(email)
+                                .nickname(nickname)
+                                .provider("GOOGLE")
+                                .providerId(providerId)
+                                .build()
+                ));
+
+        String accessToken = jwtTokenProvider.createAccessToken(user.getEmail());
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
+        updateRefreshToken(user, refreshToken);
+
+        return new TokenResponse(accessToken, refreshToken);
+    }
+
     private void updateRefreshToken(User user, String newRefreshToken) {
         LocalDateTime expiresAt = LocalDateTime.now().plus(Duration.ofMillis(jwtProperties.getRefreshTokenExpiration()));
 

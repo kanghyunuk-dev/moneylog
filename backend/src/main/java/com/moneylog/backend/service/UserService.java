@@ -54,7 +54,7 @@ public class UserService {
         User managedUser = userRepository.findById(user.getId())
                 .orElseThrow(() -> new UserNotFoundException("존재하지 않는 사용자 입니다"));
 
-        if(!passwordEncoder.matches(request.password(), managedUser.getPassword())) {
+        if (managedUser.getPassword() != null && !passwordEncoder.matches(request.password(), managedUser.getPassword())) {
             throw new InvalidCredentialsException("비밀번호가 일치하지 않습니다");
         }
 

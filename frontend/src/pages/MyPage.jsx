@@ -156,26 +156,27 @@ function MyPage() {
                     {nicknameError && <p className="error-message">{nicknameError}</p>}
                 </div>
             </div>
+            {userInfo.provider !== 'GOOGLE' && (
+                <form className="password-card" onSubmit={handlePasswordSubmit}>
+                    <h2>비밀번호 변경</h2>
 
-            <form className="password-card" onSubmit={handlePasswordSubmit}>
-                <h2>비밀번호 변경</h2>
+                    <label>현재 비밀번호</label>
+                    <input type="password" placeholder="현재 비밀번호" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}/>
+                    
+                    <label>새 비밀번호</label>
+                    <input type="password" placeholder="영문+숫자 조합 8자 이상" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
+                    
+                    <label>새 비밀번호 확인</label>
+                    <input type="password" placeholder="새 비밀번호 재입력" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)}/>
+                    
+                    {passwordError && <p className="error-message">{passwordError}</p>}
+                    {passwordSuccess && <p className="success-message">{passwordSuccess}</p>}
 
-                <label>현재 비밀번호</label>
-                <input type="password" placeholder="현재 비밀번호" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}/>
-                
-                <label>새 비밀번호</label>
-                <input type="password" placeholder="영문+숫자 조합 8자 이상" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
-                
-                <label>새 비밀번호 확인</label>
-                <input type="password" placeholder="새 비밀번호 재입력" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)}/>
-                
-                {passwordError && <p className="error-message">{passwordError}</p>}
-                {passwordSuccess && <p className="success-message">{passwordSuccess}</p>}
-
-                <button type="submit" disabled={isPasswordLoading}>
-                    {isPasswordLoading ? '변경 중...' : '비밀번호 변경'}
-                </button>
-            </form>
+                    <button type="submit" disabled={isPasswordLoading}>
+                        {isPasswordLoading ? '변경 중...' : '비밀번호 변경'}
+                    </button>
+                </form>
+            )}
 
             <div className="danger-zone">
                 <h2>계정 관리</h2>
@@ -189,8 +190,14 @@ function MyPage() {
                         <h2>정말 탈퇴하시겠습니까?</h2>
                         <p>탈퇴 시 계정 정보가 삭제되며 되돌릴 수 없습니다.</p>
 
-                        <label>비밀번호 확인</label>
-                        <input type="password" placeholder='비밀번호 입력' value={withdrawPassword} onChange={(e) => setWithdrawPassword(e.target.value)}/>
+                        {userInfo.provider === 'GOOGLE' ? (
+                            <p>구글 계정으로 로그인하셨습니다. 비밀번호 확인 없이 탈퇴가 진행됩니다.</p>
+                        ) : (
+                            <>
+                                <label>비밀번호 확인</label>
+                                <input type="password" placeholder='비밀번호 입력' value={withdrawPassword} onChange={(e) => setWithdrawPassword(e.target.value)}/>
+                            </>
+                        )}
 
                         {withdrawError && <p className='error-message'>{withdrawError}</p>}
 

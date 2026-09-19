@@ -1,7 +1,9 @@
 package com.moneylog.backend.config;
 
+import com.moneylog.backend.security.CookieOAuth2AuthorizationRequestRepository;
 import com.moneylog.backend.security.CsrfCookieFilter;
 import com.moneylog.backend.security.JWTAuthorizationFilter;
+import com.moneylog.backend.security.OAuth2LoginSuccessHandler;
 import com.moneylog.backend.security.handler.CustomAccessDeniedHandler;
 import com.moneylog.backend.security.handler.CustomAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
@@ -35,7 +37,8 @@ public class SecurityConfig {
             HttpSecurity http,
             JWTAuthorizationFilter jwtAuthorizationFilter,
             CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
-            CustomAccessDeniedHandler customAccessDeniedHandler
+            CustomAccessDeniedHandler customAccessDeniedHandler,
+            OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler
     ) throws Exception {
         http
                 .csrf(CsrfConfigurer::spa)
@@ -43,6 +46,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
@@ -50,7 +54,13 @@ public class SecurityConfig {
                         .accessDeniedHandler(customAccessDeniedHandler)
                 )
                 .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class);
+                .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
+                .oauth2Login(oauth2 -> oauth2
+                .authorizationEndpoint(endpoint -> endpoint
+                        .authorizationRequestRepository(new CookieOAuth2AuthorizationRequestRepository())
+                )
+                .successHandler(oAuth2LoginSuccessHandler)
+        );
         return http.build();
     }
 
