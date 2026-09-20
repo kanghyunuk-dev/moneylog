@@ -43,7 +43,7 @@ public class UserController {
     }
 
     @DeleteMapping("/me")
-    public ResponseEntity<Void> withdraw(@AuthenticationPrincipal PrincipalDetails principalDetails, @Valid @RequestBody WithdrawRequest request, HttpServletResponse response) {
+    public ResponseEntity<Void> withdraw(@AuthenticationPrincipal PrincipalDetails principalDetails, @RequestBody WithdrawRequest request, HttpServletResponse response) {
 
         userService.withdraw(principalDetails.getUser(), request);
 

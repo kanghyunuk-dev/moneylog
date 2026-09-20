@@ -1,6 +1,9 @@
-package com.moneylog.backend.security;
+package com.moneylog.backend.security.oauth2;
 
 import com.moneylog.backend.dto.response.TokenResponse;
+import com.moneylog.backend.security.AppProperties;
+import com.moneylog.backend.security.CookieUtils;
+import com.moneylog.backend.security.JWTProperties;
 import com.moneylog.backend.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,8 +23,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final AuthService authService;
     private final JWTProperties jwtProperties;
-
-    private static final String REDIRECT_URI = "http://localhost:5173/";
+    private final AppProperties appProperties;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
@@ -29,7 +31,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         Boolean emailVerified = oAuth2User.getAttribute("email_verified");
         if (emailVerified == null || !emailVerified) {
-            response.sendRedirect("http://localhost:5173/login?error=email_not_verified");
+            response.sendRedirect(appProperties.getFrontendUrl() + "/login?error=email_not_verified");
             return;
         }
 
@@ -42,6 +44,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("accessToken", tokens.accessToken(), Duration.ofMillis(jwtProperties.getAccessTokenExpiration())).toString());
         response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("refreshToken", tokens.refreshToken(), Duration.ofMillis(jwtProperties.getRefreshTokenExpiration())).toString());
 
-        response.sendRedirect(REDIRECT_URI);
+        response.sendRedirect(appProperties.getFrontendUrl() + "/");
     }
 }

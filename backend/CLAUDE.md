@@ -21,10 +21,11 @@
 - Spring Boot 4.0.7 → Spring Security 7.0.6(`./gradlew dependencies`로 확인, 버전은 항상 재확인하고 추측 금지). 구버전 DSL(`authorizeRequests()` 등) 금지.
 - JWT AccessToken 30분/RefreshToken 7일, RefreshToken은 `refresh_token` 테이블 저장(④단계 전까지).
 - 탈퇴 여부는 매 요청 DB 재조회(`PrincipalDetailsService`/`AuthService.refresh()`가 각각 확인) — ①단계용 단순화, ④단계에서 Redis로 최적화 예정.
-- 회원탈퇴(`DELETE /api/users/me`, 비밀번호 확인 필요)는 소프트 삭제 처리, `UserCleanupScheduler`(`scheduler` 패키지)가 30일 뒤 하드 삭제.
+- 회원탈퇴(`DELETE /api/users/me`, 비밀번호 확인 필요 — 소셜 가입자는 `password`가 NULL이라 확인 생략)는 소프트 삭제 처리, `UserCleanupScheduler`(`scheduler` 패키지)가 30일 뒤 하드 삭제.
 - 토큰은 응답 바디가 아니라 httpOnly `ResponseCookie`(`secure(false)`는 로컬 HTTP 개발 환경 한정, 배포 시 `true`로 전환 필요)로 발급 — `AuthController`의 `login`/`refresh`/`logout`, `UserController`의 `withdraw`가 각각 발급·재발급·만료(`maxAge(0)`)를 담당, 쿠키 생성 로직은 `security/CookieUtils`(정적 메서드)로 공통화. `JWTAuthorizationFilter`는 `Authorization` 헤더가 아니라 쿠키에서 토큰을 읽음.
 - CSRF는 `SecurityConfig`에서 `CsrfConfigurer::spa()`(Spring Security 7의 SPA 전용 설정, 채택 이유는 `docs/decisions.md` "백엔드 구현 판단" 참고)로 활성화하고, `CsrfCookieFilter`(직접 작성, `CsrfFilter` 뒤에 배치)로 `XSRF-TOKEN` 쿠키 생성을 강제 트리거 — 이 필터가 왜 필요했는지(403 에러 실제 재현/원인/해결)는 `docs/troubleshooting.md` 참고.
 - 로그인 상태 확인은 `GET /api/auth/me`(SecurityContext의 인증 여부로 200/401 응답), 로그아웃은 `POST /api/auth/logout`(쿠키 만료 + DB의 RefreshToken 삭제).
+- 소셜로그인(구글)은 `SecurityConfig`의 `.oauth2Login(...)`으로 구성, OAuth2 state는 STATELESS 정책 유지를 위해 세션 대신 `security/oauth2/CookieOAuth2AuthorizationRequestRepository`(쿠키 저장, Jackson JSON 직렬화 — Java 표준 직렬화 금지, 안전하지 않은 역직렬화 위험)로 관리. 이 쿠키만 `CookieUtils.build(..., "Lax")`로 발급(다른 쿠키는 `"Strict"` 기본값) — OAuth2 콜백이 교차 사이트 리다이렉트라 `Strict`면 쿠키가 안 실림. 로그인 성공 처리는 `security/oauth2/OAuth2LoginSuccessHandler`, 프론트 리다이렉트 주소는 하드코딩 대신 `AppProperties`(`app.frontend-url`)로 관리. 판단 근거는 `docs/decisions.md` 참고.
 
 ## 예외 처리
 - 도메인 의미가 담긴 커스텀 예외(`DuplicateEmailException` 등, 앞으로 생길 유사 상황도 같은 패턴)를 던지고, `GlobalExceptionHandler`(`@RestControllerAdvice`) 하나가 모든 예외→HTTP 응답(상태 코드+메시지)을 일괄 변환. 자바 표준 예외(`IllegalArgumentException` 등) 즉석 사용 금지 — 의미가 모호하고 처리 로직이 Controller마다 흩어짐.

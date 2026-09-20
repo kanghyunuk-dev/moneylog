@@ -41,8 +41,15 @@ public class AuthService {
 
     @Transactional
     public UserResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
-            throw new DuplicateEmailException("사용할 수 없는 이메일 입니다");
+        User existing = userRepository.findByEmail(request.email()).orElse(null);
+        if (existing != null) {
+            if (existing.getDeletedAt() != null) {
+                throw new DuplicateEmailException("사용할 수 없는 이메일 입니다");
+            } else if ("GOOGLE".equals(existing.getProvider())) {
+                throw new DuplicateEmailException("Google로 가입된 이메일 입니다. Google 로그인을 이용해주세요");
+            } else {
+                throw new DuplicateEmailException("이미 가입된 이메일 입니다");
+            }
         }
 
         String encodedPassword = passwordEncoder.encode(request.password());

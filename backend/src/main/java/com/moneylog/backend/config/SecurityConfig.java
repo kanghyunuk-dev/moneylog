@@ -1,9 +1,9 @@
 package com.moneylog.backend.config;
 
-import com.moneylog.backend.security.CookieOAuth2AuthorizationRequestRepository;
+import com.moneylog.backend.security.oauth2.CookieOAuth2AuthorizationRequestRepository;
 import com.moneylog.backend.security.CsrfCookieFilter;
 import com.moneylog.backend.security.JWTAuthorizationFilter;
-import com.moneylog.backend.security.OAuth2LoginSuccessHandler;
+import com.moneylog.backend.security.oauth2.OAuth2LoginSuccessHandler;
 import com.moneylog.backend.security.handler.CustomAccessDeniedHandler;
 import com.moneylog.backend.security.handler.CustomAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
@@ -38,7 +38,8 @@ public class SecurityConfig {
             JWTAuthorizationFilter jwtAuthorizationFilter,
             CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
             CustomAccessDeniedHandler customAccessDeniedHandler,
-            OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler
+            OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler,
+            CookieOAuth2AuthorizationRequestRepository cookieOAuth2AuthorizationRequestRepository
     ) throws Exception {
         http
                 .csrf(CsrfConfigurer::spa)
@@ -57,7 +58,7 @@ public class SecurityConfig {
                 .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
                 .oauth2Login(oauth2 -> oauth2
                 .authorizationEndpoint(endpoint -> endpoint
-                        .authorizationRequestRepository(new CookieOAuth2AuthorizationRequestRepository())
+                        .authorizationRequestRepository(cookieOAuth2AuthorizationRequestRepository)
                 )
                 .successHandler(oAuth2LoginSuccessHandler)
         );
