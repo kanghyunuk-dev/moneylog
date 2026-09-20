@@ -114,3 +114,12 @@ localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `Csr
 - **원인**: `JWTAuthorizationFilter`는 `/api/auth/login`처럼 `permitAll()`인 경로를 포함해 **모든 요청**에서 실행됨. 브라우저에 남아있던(로그아웃 전 발급된, 아직 만료 안 된) 해당 계정의 accessToken 쿠키가 있으면, 이 필터가 그 토큰으로 `principalDetailsService.loadUserByUsername()`을 먼저 호출함 — 이때 탈퇴 여부 체크가 새로 추가되며 `UsernameNotFoundException`을 던지게 됐는데, 필터가 이를 try-catch 없이 그대로 뒀음. 예외가 필터 밖으로 전파되면 `filterChain.doFilter()` 자체가 호출되지 않고, `ExceptionTranslationFilter`가 이를 가로채 `CustomAuthenticationEntryPoint`(제네릭 401)로 응답 — 로그인 요청이 `AuthController`/`AuthService`에 도달하지도 못하고 막혀버림.
 - **해결**: `JWTAuthorizationFilter`의 `loadUserByUsername()` 호출을 `catch (UsernameNotFoundException e)`로 감싸 SecurityContext 등록만 건너뛰고 `filterChain.doFilter()`는 항상 실행되도록 수정 — 필터 본래의 역할("토큰이 유효하면 인증 등록, 실패해도 다음 필터로 그냥 넘어감")을 되찾음. Spring Security 공식 GitHub 이슈(#14120, #12599 — "PermitAll routes returns 401 when token provided is expired/invalid")로 실제로 흔히 겪는 알려진 문제 패턴임을 확인 후 진행.
 - **참고**: 판단 배경(탈퇴 체크 지점을 로그인/매 요청 인가/refresh 세 곳으로 정리한 이유)은 `docs/decisions.md` "백엔드 구현 판단" 참고.
+
+## 구글 로그인 콜백이 `authorization_request_not_found`로 실패 (2026-09-20)
+
+`CookieOAuth2AuthorizationRequestRepository`의 쿠키를 `jakarta.servlet.http.Cookie`에서 `CookieUtils`(secure/sameSite 적용) 기반으로 교체한 직후, 실제 브라우저로 로그인을 테스트하며 겪은 문제.
+
+- **증상**: "구글로 로그인" 클릭 → 구글 로그인/동의까지 정상 진행 → 콜백(`/login/oauth2/code/google`)에서 `localhost:8080/login?error`로 리다이렉트, 프론트는 401(`TOKEN_INVALID`)만 반복. 백엔드 콘솔엔 기본 로그 레벨로는 아무 에러도 안 보임.
+- **원인 추적**: `logging.level.org.springframework.security=DEBUG`, `org.springframework.security.oauth2=TRACE`를 임시로 켜서 확인 — `OAuth2AuthenticationException: [authorization_request_not_found]`가 콜백 처리 중 발생. `CookieUtils.build()`가 쿠키에 `sameSite="Strict"`를 적용하는데, 구글에서 우리 서버로 돌아오는 콜백은 브라우저 입장에서 교차 사이트(cross-site) 리다이렉트라 `SameSite=Strict` 쿠키는 이 요청에 아예 실리지 않음 — `loadAuthorizationRequest()`가 쿠키를 못 찾아 `null`을 반환.
+- **해결**: `CookieUtils.build()`에 `sameSite`를 인자로 받는 오버로드를 추가하고, OAuth2 state 쿠키만 `"Lax"`로 지정(다른 쿠키는 기존대로 `"Strict"` 유지). `Lax`는 최상위 탐색(리다이렉트 포함)에는 쿠키를 실어 보내되 `iframe`/`fetch` 같은 배경 요청에는 안 실어서, `None`보다 안전하면서 OAuth2 리다이렉트 흐름은 정상 동작.
+- **디버깅 팁**: OAuth2 로그인 실패는 기본 로그 레벨로는 원인이 전혀 안 보이므로, `authorization_request_not_found` 같은 모호한 에러를 만나면 위 두 로그 레벨을 임시로 켜서 `TRACE` 스택트레이스를 확인하는 게 가장 빠른 진단 경로.

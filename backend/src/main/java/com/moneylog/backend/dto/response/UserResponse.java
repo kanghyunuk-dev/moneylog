@@ -8,6 +8,7 @@ public record UserResponse(
         Long id,
         String email,
         String nickname,
+        String provider,
         LocalDateTime createdAt
 ) {
     public static UserResponse from(User user) {
@@ -15,6 +16,7 @@ public record UserResponse(
                 user.getId(),
                 user.getEmail(),
                 user.getNickname(),
+                user.getProvider(),
                 user.getCreatedAt()
         );
     }

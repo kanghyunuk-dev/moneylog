@@ -36,6 +36,10 @@ function LoginPage() {
         }
     }
 
+    function handleGoogleLogin() {
+        window.location.href = `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/google`;
+    }
+
     return (
         <div className="auth-layout">
             <div className="login-page">
@@ -61,7 +65,7 @@ function LoginPage() {
 
                     <div className="divider">또는</div>
 
-                    <button type="button" className="google-button">
+                    <button type="button" className="google-button" onClick={handleGoogleLogin}>
                         G 구글로 로그인
                     </button>
                 </form>
