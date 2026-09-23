@@ -64,4 +64,13 @@ public class JWTTokenProvider {
                 .getSubject();
     }
 
+    public Date getExpirationFromToken(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getExpiration();
+    }
+
 }

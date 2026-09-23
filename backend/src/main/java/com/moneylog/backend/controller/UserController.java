@@ -6,6 +6,7 @@ import com.moneylog.backend.dto.request.WithdrawRequest;
 import com.moneylog.backend.dto.response.UserResponse;
 import com.moneylog.backend.security.CookieUtils;
 import com.moneylog.backend.security.PrincipalDetails;
+import com.moneylog.backend.security.TokenBlacklistService;
 import com.moneylog.backend.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -23,6 +24,7 @@ import java.time.Duration;
 public class UserController {
 
     private final UserService userService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> me(@AuthenticationPrincipal PrincipalDetails principalDetails) {
@@ -43,9 +45,13 @@ public class UserController {
     }
 
     @DeleteMapping("/me")
-    public ResponseEntity<Void> withdraw(@AuthenticationPrincipal PrincipalDetails principalDetails, @RequestBody WithdrawRequest request, HttpServletResponse response) {
+    public ResponseEntity<Void> withdraw(@AuthenticationPrincipal PrincipalDetails principalDetails, @RequestBody WithdrawRequest request, @CookieValue(value = "accessToken", required = false) String accessToken, HttpServletResponse response) {
 
         userService.withdraw(principalDetails.getUser(), request);
+
+        if(accessToken != null) {
+            tokenBlacklistService.blacklist(accessToken);
+        }
 
         response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("accessToken", "", Duration.ZERO).toString());
         response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("refreshToken", "", Duration.ZERO).toString());

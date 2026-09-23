@@ -9,6 +9,7 @@ import com.moneylog.backend.dto.response.UserResponse;
 import com.moneylog.backend.exception.InvalidTokenException;
 import com.moneylog.backend.security.CookieUtils;
 import com.moneylog.backend.security.JWTProperties;
+import com.moneylog.backend.security.TokenBlacklistService;
 import com.moneylog.backend.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -30,6 +31,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final JWTProperties jwtProperties;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -72,7 +74,11 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@CookieValue(value = "refreshToken", required = false) String refreshToken, HttpServletResponse response) {
+    public ResponseEntity<Void> logout(@CookieValue(value = "accessToken", required = false) String accessToken, @CookieValue(value = "refreshToken", required = false) String refreshToken, HttpServletResponse response) {
+        if(accessToken != null) {
+            tokenBlacklistService.blacklist(accessToken);
+        }
+
         if(refreshToken != null) {
             authService.logout(refreshToken);
         }

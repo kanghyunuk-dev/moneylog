@@ -123,3 +123,20 @@ localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `Csr
 - **원인 추적**: `logging.level.org.springframework.security=DEBUG`, `org.springframework.security.oauth2=TRACE`를 임시로 켜서 확인 — `OAuth2AuthenticationException: [authorization_request_not_found]`가 콜백 처리 중 발생. `CookieUtils.build()`가 쿠키에 `sameSite="Strict"`를 적용하는데, 구글에서 우리 서버로 돌아오는 콜백은 브라우저 입장에서 교차 사이트(cross-site) 리다이렉트라 `SameSite=Strict` 쿠키는 이 요청에 아예 실리지 않음 — `loadAuthorizationRequest()`가 쿠키를 못 찾아 `null`을 반환.
 - **해결**: `CookieUtils.build()`에 `sameSite`를 인자로 받는 오버로드를 추가하고, OAuth2 state 쿠키만 `"Lax"`로 지정(다른 쿠키는 기존대로 `"Strict"` 유지). `Lax`는 최상위 탐색(리다이렉트 포함)에는 쿠키를 실어 보내되 `iframe`/`fetch` 같은 배경 요청에는 안 실어서, `None`보다 안전하면서 OAuth2 리다이렉트 흐름은 정상 동작.
 - **디버깅 팁**: OAuth2 로그인 실패는 기본 로그 레벨로는 원인이 전혀 안 보이므로, `authorization_request_not_found` 같은 모호한 에러를 만나면 위 두 로그 레벨을 임시로 켜서 `TRACE` 스택트레이스를 확인하는 게 가장 빠른 진단 경로.
+
+## `RedisTemplate` 제네릭 타입 불일치로 빈을 못 찾음 (2026-09-23)
+
+`TokenBlacklistService`(`RedisTemplate<String, String>`), `PrincipalDetailsService`(`RedisTemplate<String, UserAuthCache>`), `UserService`(`RedisTemplate<String, Object>`)를 각각 다른 제네릭 타입으로 주입받게 만든 뒤 서버를 처음 실행하며 겪은 문제.
+
+- **증상**: `Parameter 1 of constructor in ... PrincipalDetailsService required a bean of type 'RedisTemplate' that could not be found.`로 애플리케이션 시작 자체가 실패.
+- **원인**: `spring-boot-starter-data-redis`의 자동 설정이 만들어주는 기본 `RedisTemplate` 빈은 `RedisTemplate<Object, Object>` 타입 하나뿐. Java 제네릭은 런타임에 타입 정보가 지워지는(type erasure) 특성이 있어 자동 설정이 제공하는 빈의 실제 타입과 우리가 요구한 타입(`<String, UserAuthCache>` 등)이 일치하지 않으면 스프링이 주입 후보에서 제외함 — 여러 클래스가 제각기 다른 제네릭 타입으로 `RedisTemplate`을 요구하면 이런 불일치가 발생.
+- **해결**: `config/RedisConfig`에 `RedisTemplate<String, Object>` 빈을 명시적으로 등록하고, `TokenBlacklistService`/`PrincipalDetailsService`도 전부 이 타입으로 통일. `Object` 타입으로 받은 값을 실제 타입으로 쓸 때는 `instanceof` 체크 후 형변환.
+
+## `GenericJackson2JsonRedisSerializer`가 Jackson 3 `ObjectMapper`를 안 받음 (2026-09-23)
+
+Redis 값 직렬화기를 설정하며, `com.fasterxml.jackson.databind.ObjectMapper`(Jackson 2)가 아니라 `tools.jackson.databind.ObjectMapper`(Jackson 3, Spring Boot 4 기본)로 만든 객체를 넘기려다 겪은 문제.
+
+- **증상**: `new GenericJackson2JsonRedisSerializer(objectMapper)`가 컴파일 안 됨. `ObjectMapper.builder()`, `ObjectMapper.DefaultTyping`도 각각 존재하지 않는다는 에러.
+- **원인**: `spring-data-redis` 라이브러리 안에 이름이 거의 같은 두 클래스가 공존함 — `GenericJackson2JsonRedisSerializer`(`2`가 붙음, Jackson 2 전용, deprecated)와 `GenericJacksonJsonRedisSerializer`(`2` 없음, Jackson 3 전용). Spring Data Redis 공식 업그레이드 가이드(docs.spring.io)에 이 대응 규칙("2가 붙은 클래스 = 구버전 Jackson용")이 명시되어 있음. 또한 `ObjectMapper.builder()`가 아니라 `JsonMapper.builder()`(구체적 포맷 하위클래스)에서 시작해야 하고, `DefaultTyping`도 `ObjectMapper`의 이너 클래스가 아니라 `tools.jackson.databind` 패키지의 독립 클래스임.
+- **해결**: `GenericJacksonJsonRedisSerializer.builder().enableDefaultTyping(typeValidator).build()`로 교체 — `ObjectMapper`를 직접 조립할 필요 없이 Jackson 3 전용 빌더가 `PolymorphicTypeValidator`를 바로 받음. 참고로 신버전은 구버전과 달리 `PolymorphicTypeValidator` 없이는 다형성 역직렬화를 기본으로 켜지 않도록 설계가 바뀜(안전한 기본값으로 개선).
+- **판단 배경**: 안전한 역직렬화로 이 방식을 채택한 이유는 `docs/decisions.md` "백엔드 구현 판단" 참고.
