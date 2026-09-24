@@ -14,7 +14,7 @@ git으로 코드/문서/DB 설계는 전부 그대로 넘어오지만, "그 컴�
    ```
    docker run -d --name moneylog-redis -p 6379:6379 redis:latest
    ```
-   `docker ps`로 `moneylog-redis`가 `Up` 상태인지 확인. 컴퓨터 재시작 후에는 Docker Desktop만 다시 켜면 컨테이너도 자동 재시작됨(안 되면 `docker start moneylog-redis`).
-5. **환경변수 `MYSQL_PASSWORD` 등록**: Windows라면 `setx MYSQL_PASSWORD 실제비밀번호` 또는 `.env` 파일을 새로 생성(`MYSQL_PASSWORD=...`, 이 파일은 `.gitignore`에 있어 git으로 안 넘어옴). backend의 `application.properties`(`spring.datasource.password=${MYSQL_PASSWORD}`)가 이 값을 참조하므로 필수.
+   `docker ps`로 `moneylog-redis`가 `Up` 상태인지 확인. 컴퓨터를 껐다 켠 뒤엔 컨테이너가 `Exited`로 남아 자동으로 안 켜질 수 있으니(실제로 확인됨) 개발 시작 전에 `docker start moneylog-redis`로 켤 것 — 안 켜도 앱은 뜨지만 Redis 장애 폴백 경로로 동작해 요청마다 경고 로그와 약 0.5초 지연이 생김.
+5. **환경변수 등록** (`MYSQL_PASSWORD`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`): Windows라면 `setx MYSQL_PASSWORD 실제비밀번호`처럼 각각 등록하거나 `.env` 파일을 새로 생성(`MYSQL_PASSWORD=...`, 이 파일은 `.gitignore`에 있어 git으로 안 넘어옴). backend의 `application.properties`가 `${...}`로 참조하는 값이라 하나라도 없으면 앱 실행과 `./gradlew test`가 실패함.
 6. **백엔드 실행 확인**: `cd backend && ./gradlew test` — `BUILD SUCCESSFUL`이면 DB 연결까지 정상.
 7. **프론트 실행 확인**: `cd frontend && npm install && npm run dev` — 기본 화면 뜨면 정상.

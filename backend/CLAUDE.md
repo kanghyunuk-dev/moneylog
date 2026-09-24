@@ -20,9 +20,10 @@
 ## 인증/보안
 - Spring Boot 4.0.7 → Spring Security 7.0.6(`./gradlew dependencies`로 확인, 버전은 항상 재확인하고 추측 금지). 구버전 DSL(`authorizeRequests()` 등) 금지.
 - JWT AccessToken 30분/RefreshToken 7일, RefreshToken은 계속 `refresh_token` 테이블(MySQL) 저장 — Redis로 이전하지 않기로 확정, 판단 근거는 `docs/decisions.md` 참고.
-- 탈퇴 여부는 `PrincipalDetailsService.loadUserByUsername()`에서 Redis 캐시(`security/UserAuthCache`, 5분 TTL) 우선 확인 후 DB 재조회, `AuthService.refresh()`는 여전히 매 요청 DB 재조회. 탈퇴/닉네임변경 시 캐시는 트랜잭션 커밋 후(`TransactionSynchronizationManager.afterCommit()`) 무효화 — 판단 근거는 `docs/decisions.md` 참고.
+- 탈퇴 여부는 `PrincipalDetailsService.loadUserByUsername()`에서 Redis 캐시(`security/UserAuthCache`, 5분 TTL) 우선 확인 후 DB 재조회, `AuthService.refresh()`는 여전히 매 요청 DB 재조회. 탈퇴 시 캐시는 트랜잭션 커밋 후(`TransactionSynchronizationManager.afterCommit()`) 무효화 — 판단 근거는 `docs/decisions.md` 참고.
 - 로그아웃/탈퇴 시 그 시점 AccessToken을 `security/TokenBlacklistService`로 Redis에 블랙리스트 등록(TTL=토큰 잔여 만료시간, 키는 SHA-256 해시), `JWTAuthorizationFilter`가 서명 검증 다음에 블랙리스트 여부를 확인.
 - Redis 값 직렬화는 `config/RedisConfig`의 `GenericJacksonJsonRedisSerializer`(Jackson 3용, `GenericJackson2JsonRedisSerializer`는 deprecated)를 `PolymorphicTypeValidator`로 `com.moneylog.backend.security` 패키지만 역직렬화 허용하도록 제한해서 사용 — 판단 근거는 `docs/decisions.md` 참고.
+- Redis 호출부(`TokenBlacklistService`, `PrincipalDetailsService`, `UserService`의 `afterCommit`)는 `DataAccessException`을 잡아 `log.warn` 후 폴백(블랙리스트 확인 실패=통과, 캐시 조회 실패=DB 조회) — Redis 장애가 인증 전체를 막지 않는 fail-open 구조, 새로 Redis를 호출하는 코드도 같은 패턴을 따를 것. 타임아웃은 `spring.data.redis.timeout=250ms`/`connect-timeout=100ms`(AWS ElastiCache 권장값). 판단 근거는 `docs/decisions.md` 참고.
 - 회원탈퇴(`DELETE /api/users/me`, 비밀번호 확인 필요 — 소셜 가입자는 `password`가 NULL이라 확인 생략)는 소프트 삭제 처리, `UserCleanupScheduler`(`scheduler` 패키지)가 30일 뒤 하드 삭제.
 - 토큰은 응답 바디가 아니라 httpOnly `ResponseCookie`(`secure(false)`는 로컬 HTTP 개발 환경 한정, 배포 시 `true`로 전환 필요)로 발급 — `AuthController`의 `login`/`refresh`/`logout`, `UserController`의 `withdraw`가 각각 발급·재발급·만료(`maxAge(0)`)를 담당, 쿠키 생성 로직은 `security/CookieUtils`(정적 메서드)로 공통화. `JWTAuthorizationFilter`는 `Authorization` 헤더가 아니라 쿠키에서 토큰을 읽음.
 - CSRF는 `SecurityConfig`에서 `CsrfConfigurer::spa()`(Spring Security 7의 SPA 전용 설정, 채택 이유는 `docs/decisions.md` "백엔드 구현 판단" 참고)로 활성화하고, `CsrfCookieFilter`(직접 작성, `CsrfFilter` 뒤에 배치)로 `XSRF-TOKEN` 쿠키 생성을 강제 트리거 — 이 필터가 왜 필요했는지(403 에러 실제 재현/원인/해결)는 `docs/troubleshooting.md` 참고.
