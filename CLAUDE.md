@@ -30,7 +30,7 @@
 
 ## 스택
 - 프론트: React (JS) — TypeScript 배제
-- 백엔드: Java 21 + Spring Boot 4.x (Gradle) + JPA + MySQL
+- 백엔드: Java 21 + Spring Boot 4.x (Gradle) + JPA + MySQL + Redis
 - Node.js / Python은 이번 프로젝트 범위에서 제외
 - 버전/기술 선택 이유는 `docs/decisions.md` 참고 (Spring Boot 4.x 채택 배경, JPA vs MyBatis, Vite vs Next.js 등)
 
@@ -41,12 +41,12 @@
 | ② | 거래/예산/카테고리/대시보드 | React+Spring Boot 기초(폼, API 연동, JPA, 상태관리) 체화 | 완료 |
 | ②-2 | 목표자산(Goal) | ②단계 완료 후 확장 | 완료 |
 | ③ | 소셜로그인(구글) | OAuth2 기반 인증 확장 학습 | 완료 |
-| ④ | Redis 연동 | 세션/토큰 캐시 관리, JWT 무상태성 트레이드오프 최적화 | 예정 |
+| ④ | Redis 연동 | 세션/토큰 캐시 관리, JWT 무상태성 트레이드오프 최적화 | 완료 |
 | ⑤ | 환율 API 연동(선택) | 외부 REST API 연동 실무 경험 | 선택 |
 
 **제외**: 관리자 페이지 (1인용 도메인에 부적합, 2차 게시판형 프로젝트로 이관). 순서 변경 이유, 범위 결정 배경은 `docs/decisions.md` 참고.
 
-## 현재 상태 (2026-09-20 기준)
+## 현재 상태 (2026-09-24 기준)
 - [x] JWT/Spring Security 인증 개념 학습 완료 (8단계, `docs/troubleshooting.md` 참고)
 - [x] ①②②-2③ 기능 명세 확정 (`docs/specs.md`)
 - [x] DB 스키마 6개 테이블 설계 + MySQL 실행 검증 완료 (`docs/db-schema.sql`)
@@ -57,6 +57,7 @@
 - [x] `backend/CLAUDE.md` 작성 완료 (패키지 구조/JPA 규칙/코드 스타일/인증 보안, 판단 근거는 `docs/decisions.md` "백엔드 구현 판단" 참고)
 - [x] **①단계(로그인/회원가입, JWT 인증) 전체 완료(2026-08-30)** — 회원가입/로그인/토큰 관리(httpOnly+CSRF)/마이페이지/회원탈퇴(소프트삭제+30일 뒤 하드삭제) 8단계 전부 실동작 검증 완료. 판단 근거는 `docs/decisions.md`, 겪은 버그는 `docs/troubleshooting.md` 참고
 - [x] **③단계(소셜로그인, 구글) 전체 완료(2026-09-20)** — OAuth2 로그인 흐름(쿠키 기반 state 관리로 STATELESS 유지), 이메일 기준 계정 자동 연결, `email_verified` 검증, 소셜 사용자 탈퇴/비밀번호변경 처리 구현+실동작 검증 완료. 최종 코드 검토에서 나온 보안 이슈(쿠키 역직렬화, secure/sameSite, 리다이렉트 URI 하드코딩) 전부 수정 완료. 판단 근거는 `docs/decisions.md` 참고
+- [x] **④단계(Redis 연동) 전체 완료(2026-09-23)** — 로그아웃/탈퇴 시 AccessToken 즉시 블랙리스트 처리, 사용자 탈퇴 여부 캐싱(5분 TTL) 구현+실동작 검증 완료. RefreshToken은 계속 MySQL 유지(1인 프로젝트 규모엔 Redis 이전 이득 대비 휘발성 리스크가 더 큼). 최종 코드 검토에서 나온 이슈(테스트 누락, 안전하지 않은 Jackson 역직렬화, 블랙리스트 키 토큰 원문 노출, 트랜잭션-캐시 삭제 순서 경합, 캐시 키 상수 중복, Redis 장애 시 인증 마비) 전부 수정 완료. 판단 근거는 `docs/decisions.md` 참고
 - [x] **②단계(거래/예산/카테고리/대시보드) 전체 완료(2026-09-14)** — 거래/예산/통계 API+화면 전부 `develop`에 병합 완료(v0.3.0~v0.5.0). 판단 근거는 `docs/decisions.md` 참고
 - [x] **②-2단계(목표자산) API+화면 완료(2026-09-16)** — 목표 CRUD, 활성/대기/완료 상태 전환, 진행률 실시간 계산 전부 구현. 판단 근거는 `docs/decisions.md` 참고
 - [x] **카테고리 아이콘(이모지) 도입 완료(2026-09-17)** — `category.icon` 컬럼 추가(고정 15개 매핑), 거래내역/예산 화면에 반영. 판단 근거는 `docs/decisions.md` 참고

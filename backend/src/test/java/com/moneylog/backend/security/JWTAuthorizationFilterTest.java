@@ -32,6 +32,9 @@ class JWTAuthorizationFilterTest {
     private PrincipalDetailsService principalDetailsService;
 
     @Mock
+    private TokenBlacklistService tokenBlacklistService;
+
+    @Mock
     private HttpServletRequest request;
 
     @Mock
@@ -61,6 +64,7 @@ class JWTAuthorizationFilterTest {
         given(jwtTokenProvider.getEmailFromToken(token)).willReturn(email);
         given(principalDetailsService.loadUserByUsername(email)).willReturn(userDetails);
         given(userDetails.getAuthorities()).willReturn(List.of());
+        given(tokenBlacklistService.isBlacklisted(token)).willReturn(false);
 
         //when
         jwtAuthorizationFilter.doFilter(request, response, filterChain);
@@ -97,6 +101,7 @@ class JWTAuthorizationFilterTest {
         given(jwtTokenProvider.validateToken(token)).willReturn(true);
         given(jwtTokenProvider.getEmailFromToken(token)).willReturn(email);
         given(principalDetailsService.loadUserByUsername(email)).willThrow(new UsernameNotFoundException("탈퇴한 계정 입니다"));
+        given(tokenBlacklistService.isBlacklisted(token)).willReturn(false);
 
         //when
         jwtAuthorizationFilter.doFilter(request, response, filterChain);
@@ -107,4 +112,22 @@ class JWTAuthorizationFilterTest {
         verify(filterChain).doFilter(request, response);
     }
 
+    @Test
+    void 블랙리스트에_등록된_토큰이면_SecurityContext에_인증정보가_설정되지_않는다() throws Exception {
+        //given
+        String token = "blacklisted-token";
+        Cookie[] cookies = { new Cookie("accessToken", token) };
+
+        given(request.getCookies()).willReturn(cookies);
+        given(jwtTokenProvider.validateToken(token)).willReturn(true);
+        given(tokenBlacklistService.isBlacklisted(token)).willReturn(true);
+
+        //when
+        jwtAuthorizationFilter.doFilter(request, response, filterChain);
+
+        //then
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertThat(authentication).isNull();
+        verify(filterChain).doFilter(request, response);
+    }
 }

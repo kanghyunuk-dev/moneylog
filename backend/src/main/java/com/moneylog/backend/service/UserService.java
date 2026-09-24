@@ -9,18 +9,27 @@ import com.moneylog.backend.exception.InvalidCredentialsException;
 import com.moneylog.backend.exception.UserNotFoundException;
 import com.moneylog.backend.repository.RefreshTokenRepository;
 import com.moneylog.backend.repository.UserRepository;
+import com.moneylog.backend.security.UserAuthCache;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
 
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
+
 
     @Transactional(readOnly = true)
     public UserResponse getMyInfo(User user) {
@@ -60,6 +69,18 @@ public class UserService {
 
         managedUser.softDelete();
         refreshTokenRepository.deleteByUser(managedUser);
+
+        String email = managedUser.getEmail();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    redisTemplate.delete(UserAuthCache.KEY_PREFIX + email);
+                } catch (DataAccessException e) {
+                    log.warn("Redis 장애로 사용자 캐시 삭제 실패, TTL(5분) 만료로 정리됨: {}", e.toString());
+                }
+            }
+        });
     }
 
 }

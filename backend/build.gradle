@@ -25,6 +25,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	// oauth2
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	// redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'

@@ -22,13 +22,14 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
 
     private final JWTTokenProvider jwtTokenProvider;
     private final PrincipalDetailsService principalDetailsService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         // 1. 쿠키에서 토큰 추출
         String token = resolveToken(request);
 
-        if(token != null && jwtTokenProvider.validateToken(token)) {
+        if(token != null && jwtTokenProvider.validateToken(token) && !tokenBlacklistService.isBlacklisted(token)) {
             try {
                 // 2. 토큰 검증 통과 시, 토큰에서 이메일을 꺼내 사용자 조회
                 String email = jwtTokenProvider.getEmailFromToken(token);
