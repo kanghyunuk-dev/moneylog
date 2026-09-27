@@ -25,6 +25,7 @@ public class UserController {
 
     private final UserService userService;
     private final TokenBlacklistService tokenBlacklistService;
+    private final CookieUtils cookieUtils;
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> me(@AuthenticationPrincipal PrincipalDetails principalDetails) {
@@ -53,8 +54,8 @@ public class UserController {
             tokenBlacklistService.blacklist(accessToken);
         }
 
-        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("accessToken", "", Duration.ZERO).toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("refreshToken", "", Duration.ZERO).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieUtils.build("accessToken", "", Duration.ZERO).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieUtils.build("refreshToken", "", Duration.ZERO).toString());
 
         return ResponseEntity.ok().build();
     }

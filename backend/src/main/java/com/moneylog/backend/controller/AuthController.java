@@ -32,6 +32,7 @@ public class AuthController {
     private final AuthService authService;
     private final JWTProperties jwtProperties;
     private final TokenBlacklistService tokenBlacklistService;
+    private final CookieUtils cookieUtils;
 
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -43,8 +44,8 @@ public class AuthController {
     public ResponseEntity<Void> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         TokenResponse tokens = authService.login(request);
 
-        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("accessToken", tokens.accessToken(), Duration.ofMillis(jwtProperties.getAccessTokenExpiration())).toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("refreshToken", tokens.refreshToken(), Duration.ofMillis(jwtProperties.getRefreshTokenExpiration())).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieUtils.build("accessToken", tokens.accessToken(), Duration.ofMillis(jwtProperties.getAccessTokenExpiration())).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieUtils.build("refreshToken", tokens.refreshToken(), Duration.ofMillis(jwtProperties.getRefreshTokenExpiration())).toString());
 
         return ResponseEntity.ok().build();
     }
@@ -57,7 +58,7 @@ public class AuthController {
 
         TokenResponse tokens = authService.refresh(new RefreshTokenRequest(refreshToken));
 
-        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("accessToken", tokens.accessToken(), Duration.ofMillis(jwtProperties.getAccessTokenExpiration())).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieUtils.build("accessToken", tokens.accessToken(), Duration.ofMillis(jwtProperties.getAccessTokenExpiration())).toString());
 
         return ResponseEntity.ok().build();
     }
@@ -83,8 +84,8 @@ public class AuthController {
             authService.logout(refreshToken);
         }
 
-        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("accessToken", "", Duration.ZERO).toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build("refreshToken", "", Duration.ZERO).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieUtils.build("accessToken", "", Duration.ZERO).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieUtils.build("refreshToken", "", Duration.ZERO).toString());
 
         return ResponseEntity.ok().build();
     }

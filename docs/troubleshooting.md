@@ -115,6 +115,23 @@ localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `Csr
 - **해결**: `JWTAuthorizationFilter`의 `loadUserByUsername()` 호출을 `catch (UsernameNotFoundException e)`로 감싸 SecurityContext 등록만 건너뛰고 `filterChain.doFilter()`는 항상 실행되도록 수정 — 필터 본래의 역할("토큰이 유효하면 인증 등록, 실패해도 다음 필터로 그냥 넘어감")을 되찾음. Spring Security 공식 GitHub 이슈(#14120, #12599 — "PermitAll routes returns 401 when token provided is expired/invalid")로 실제로 흔히 겪는 알려진 문제 패턴임을 확인 후 진행.
 - **참고**: 판단 배경(탈퇴 체크 지점을 로그인/매 요청 인가/refresh 세 곳으로 정리한 이유)은 `docs/decisions.md` "백엔드 구현 판단" 참고.
 
+## Docker 이미지 안에 로컬 `.env`가 구워져 API 요청이 8080으로 나감 (2026-09-27)
+
+`docker compose`로 처음 전체 스택을 띄운 뒤 회원가입/로그인에서 CORS 에러를 겪음.
+
+- **증상**: `http://localhost`(Nginx)로 접속했는데도 브라우저가 `http://localhost:8080`으로 직접 요청을 보내며 CORS에 막힘.
+- **원인**: `frontend/Dockerfile`의 `COPY . .`가 로컬 `frontend/.env`(`VITE_API_BASE_URL=http://localhost:8080`)까지 빌드 컨텍스트에 포함시킴 — Vite 환경변수는 빌드 시점에 코드에 정적으로 치환되므로 `npm run build` 결과물에 이 값이 그대로 구워짐.
+- **해결**: `frontend/.dockerignore`에 `.env` 추가. `VITE_API_BASE_URL || ''` 처리 덕분에 값이 없으면 상대 경로로 정상 빌드됨. 재빌드는 `--no-cache`로(이전 레이어 캐시 재사용 방지).
+
+## MySQL 초기화 스크립트 실행 시 한글이 깨짐 (2026-09-27)
+
+`docs/db-schema.sql`을 `docker-entrypoint-initdb.d`로 마운트해 최초 실행 시 자동 적용되게 했는데, 카테고리 이름이 깨져서 저장됨.
+
+- **증상**: `HEX(name)` 조회 시 UTF-8을 한 번 더 잘못 인코딩한 이중 인코딩(mojibake) 상태.
+- **원인**: MySQL 공식 이미지의 entrypoint가 초기화 스크립트를 실행하는 mysql 클라이언트 호출에 문자셋 플래그를 안 줘서, 컨테이너 기본 로케일(`C`/`POSIX`, UTF-8 아님)에 따라 파일을 잘못 해석함 — `character-set-server` 같은 서버 설정과는 별개 지점.
+- **해결**: `docker-compose.yml`의 `mysql` 서비스에 `LANG: C.UTF-8` 추가. 볼륨은 최초 1회만 초기화되므로 `docker compose down -v`로 지우고 재실행해야 반영됨.
+- **참고**: 채택 이유는 `docs/decisions.md` "백엔드 구현 판단" 참고.
+
 ## 구글 로그인 콜백이 `authorization_request_not_found`로 실패 (2026-09-20)
 
 `CookieOAuth2AuthorizationRequestRepository`의 쿠키를 `jakarta.servlet.http.Cookie`에서 `CookieUtils`(secure/sameSite 적용) 기반으로 교체한 직후, 실제 브라우저로 로그인을 테스트하며 겪은 문제.

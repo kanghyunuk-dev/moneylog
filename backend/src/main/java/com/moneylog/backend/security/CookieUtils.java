@@ -1,21 +1,25 @@
 package com.moneylog.backend.security;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
+import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 
+@Component
+@RequiredArgsConstructor
 public class CookieUtils {
 
-    private CookieUtils() {}
+    private final AppProperties appProperties;
 
-    public static ResponseCookie build(String name, String value, Duration maxAge) {
+    public ResponseCookie build(String name, String value, Duration maxAge) {
         return build(name, value, maxAge, "Strict");
     }
 
-    public static ResponseCookie build(String name, String value, Duration maxAge, String sameSite) {
+    public ResponseCookie build(String name, String value, Duration maxAge, String sameSite) {
         return ResponseCookie.from(name, value)
                 .httpOnly(true)
-                .secure(false)
+                .secure(appProperties.isCookieSecure())
                 .sameSite(sameSite)
                 .path("/")
                 .maxAge(maxAge)

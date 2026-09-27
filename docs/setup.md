@@ -18,3 +18,10 @@ git으로 코드/문서/DB 설계는 전부 그대로 넘어오지만, "그 컴�
 5. **환경변수 등록** (`MYSQL_PASSWORD`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`): Windows라면 `setx MYSQL_PASSWORD 실제비밀번호`처럼 각각 등록하거나 `.env` 파일을 새로 생성(`MYSQL_PASSWORD=...`, 이 파일은 `.gitignore`에 있어 git으로 안 넘어옴). backend의 `application.properties`가 `${...}`로 참조하는 값이라 하나라도 없으면 앱 실행과 `./gradlew test`가 실패함.
 6. **백엔드 실행 확인**: `cd backend && ./gradlew test` — `BUILD SUCCESSFUL`이면 DB 연결까지 정상.
 7. **프론트 실행 확인**: `cd frontend && npm install && npm run dev` — 기본 화면 뜨면 정상.
+
+8. **(선택) Docker Compose로 전체 스택 한 번에 실행** (배포와 동일한 구성으로 검증할 때 — 위 1~7번은 기능 하나씩 개발할 때 쓰는 개별 실행 방식, 이 방식과 별개):
+   ```
+   cp .env.example .env   # MYSQL_ROOT_PASSWORD/MYSQL_APP_PASSWORD/JWT_SECRET/GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET 채우기
+   docker compose up --build
+   ```
+   mysql → redis → backend → nginx 순서로 `healthy`가 될 때까지 자동으로 기다림 — `http://localhost`로 접속해 확인. `docs/db-schema.sql` 초기화는 MySQL 볼륨이 비어있을 때 1회만 실행되므로, 스키마·시드 데이터를 바꾼 뒤엔 `docker compose down -v`로 볼륨을 지우고 다시 실행해야 함(기존 데이터도 같이 사라짐). 구글 로그인 테스트는 구글 콘솔 리디렉션 URI에 `http://localhost/login/oauth2/code/google`(포트 없음)이 등록되어 있어야 함.
