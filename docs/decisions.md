@@ -111,6 +111,9 @@ DB 설계(위 섹션)가 정해진 뒤, 그걸 JPA 코드로 어떻게 다룰지
 - **MySQL은 root와 별도로 애플리케이션 전용 계정을 만들어 사용(2026-09-27)**: root로 접속하면 SQL 인젝션 등 취약점 발생 시 피해 범위가 DB 전체로 커짐 — root는 초기화·관리 용도로만 남기고 백엔드는 `moneylog` 권한만 있는 별도 계정으로 접속.
 - **초기화 스크립트 한글 깨짐은 `LANG=C.UTF-8`로 해결, `--skip-character-set-client-handshake`는 채택 안 함(2026-09-27)**: 원인이 서버 설정이 아니라 초기화 스크립트를 읽는 mysql 클라이언트의 컨테이너 로케일이라 `LANG` 설정이 정확한 해법 — `--skip-character-set-client-handshake`(서버가 클라이언트 요청을 무시)는 근본 원인은 안 고치고 증상만 가리는 우회이자 향후 deprecated 예정이라 배제. 겪은 증상은 `docs/troubleshooting.md` 참고.
 - **`CookieUtils`를 정적 유틸에서 `@Component`로 전환(2026-09-27)**: `secure` 속성이 배포 환경마다 달라지는 설정값이 되며 `AppProperties` 의존성이 생김 — 의존성이 필요해진 유틸은 정적 메서드가 아니라 빈으로 바꾸는 게 표준.
+- **`spring.jpa.show-sql`은 환경변수 대신 Spring Profile(`local`/`prod`)로 분리(2026-09-28)**: 배포 위치가 아니라 "로깅 레벨" 성격의 정적 설정이라, 실무에서도 이런 값은 환경변수보다 프로필별 properties 파일로 관리하는 게 정석 — `application-local.properties`(켬)/`application-prod.properties`(끔), `docker-compose.yml`은 `SPRING_PROFILES_ACTIVE=prod`만 지정.
+- **CI/CD는 GitHub Actions, CI/CD 워크플로우 파일도 분리(2026-09-28)**: 1인 프로젝트에 Jenkins는 별도 서버 유지보수 부담이 커서 배제. `ci.yml`(develop+main 대상)과 `deploy.yml`(main만 대상)을 나눠, develop에 push해도 배포 워크플로우 자체가 반응하지 않게 함 — 조건문 분기보다 파일 분리가 안전.
+- **Nginx에 Let's Encrypt challenge 경로를 미리 준비(2026-09-28)**: `/.well-known/acme-challenge/`가 SPA 폴백에 걸리면 인증서 발급이 실패함 — `certbot_www` 볼륨을 nginx에 미리 마운트해, 도메인이 생긴 뒤 certbot 연동만 추가하면 되게 함.
 
 ## 프론트엔드 구현 판단
 

@@ -1,6 +1,7 @@
 services:
   mysql:
     image: mysql:8.0
+    restart: unless-stopped
     environment:
       TZ: Asia/Seoul
       LANG: C.UTF-8
@@ -20,6 +21,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -29,6 +31,7 @@ services:
 
   backend:
     build: ./backend
+    restart: unless-stopped
     environment:
       TZ: Asia/Seoul
       MYSQL_USER: moneylog
@@ -40,6 +43,7 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE}
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/moneylog?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
       SPRING_DATA_REDIS_HOST: redis
+      SPRING_PROFILES_ACTIVE: prod
     depends_on:
       mysql:
         condition: service_healthy
@@ -54,11 +58,15 @@ services:
 
   nginx:
     build: ./frontend
+    restart: unless-stopped
     ports:
       - "80:80"
+    volumes:
+      - certbot_www:/var/www/certbot
     depends_on:
       backend:
         condition: service_healthy
 
 volumes:
   mysql_data:
+  certbot_www:

@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [ "develop", "main" ]
+  pull_request:
+    branches: [ "develop", "main" ]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test1234
+          MYSQL_DATABASE: moneylog
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JDK 21 설치
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: DB 스키마 적용
+        run: mysql -h127.0.0.1 -uroot -ptest1234 moneylog < docs/db-schema.sql
+
+      - name: 백엔드 테스트
+        working-directory: ./backend
+        run: ./gradlew test
+        env:
+          MYSQL_PASSWORD: test1234
+          JWT_SECRET: ci-test-secret-key-not-used-in-production-32chars
+          GOOGLE_CLIENT_ID: dummy
+          GOOGLE_CLIENT_SECRET: dummy
+
+  frontend-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node.js 설치
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 의존성 설치
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: lint
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: build
+        working-directory: ./frontend
+        run: npm run build

@@ -31,6 +31,9 @@
 - 로그인 상태 확인은 `GET /api/auth/me`(SecurityContext의 인증 여부로 200/401 응답), 로그아웃은 `POST /api/auth/logout`(쿠키 만료 + DB의 RefreshToken 삭제).
 - 소셜로그인(구글)은 `SecurityConfig`의 `.oauth2Login(...)`으로 구성, OAuth2 state는 STATELESS 정책 유지를 위해 세션 대신 `security/oauth2/CookieOAuth2AuthorizationRequestRepository`(쿠키 저장, Jackson JSON 직렬화 — Java 표준 직렬화 금지, 안전하지 않은 역직렬화 위험)로 관리. 이 쿠키만 `CookieUtils.build(..., "Lax")`로 발급(다른 쿠키는 `"Strict"` 기본값) — OAuth2 콜백이 교차 사이트 리다이렉트라 `Strict`면 쿠키가 안 실림. 로그인 성공 처리는 `security/oauth2/OAuth2LoginSuccessHandler`, 프론트 리다이렉트 주소는 하드코딩 대신 `AppProperties`(`app.frontend-url`, `FRONTEND_URL` 환경변수로 배포 환경마다 덮어씀)로 관리. 판단 근거는 `docs/decisions.md` 참고.
 
+## 환경 설정
+- `application.properties`(공통) + `application-local.properties`/`application-prod.properties`(환경별, `spring.jpa.show-sql`처럼 "로깅 레벨" 성격의 정적 설정)로 분리, 기본 프로필은 `local`이고 배포 시 `SPRING_PROFILES_ACTIVE=prod`로 덮어씀. DB 접속 정보·프론트 주소처럼 배포 환경마다 값 자체가 달라지는 설정은 계속 `${ENV_VAR:기본값}` 환경변수 패턴 — 판단 근거는 `docs/decisions.md` 참고.
+
 ## 예외 처리
 - 도메인 의미가 담긴 커스텀 예외(`DuplicateEmailException` 등, 앞으로 생길 유사 상황도 같은 패턴)를 던지고, `GlobalExceptionHandler`(`@RestControllerAdvice`) 하나가 모든 예외→HTTP 응답(상태 코드+메시지)을 일괄 변환. 자바 표준 예외(`IllegalArgumentException` 등) 즉석 사용 금지 — 의미가 모호하고 처리 로직이 Controller마다 흩어짐.
 - Spring Security 필터 단계(MVC 이전)의 인증/인가 실패는 `GlobalExceptionHandler`가 못 잡음 — `security/handler/`(`CustomAuthenticationEntryPoint`=401, `CustomAccessDeniedHandler`=403)에서 별도 처리, 응답 형식은 동일하게 `ErrorResponse` 재사용.

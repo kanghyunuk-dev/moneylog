@@ -25,3 +25,4 @@ git으로 코드/문서/DB 설계는 전부 그대로 넘어오지만, "그 컴�
    docker compose up --build
    ```
    mysql → redis → backend → nginx 순서로 `healthy`가 될 때까지 자동으로 기다림 — `http://localhost`로 접속해 확인. `docs/db-schema.sql` 초기화는 MySQL 볼륨이 비어있을 때 1회만 실행되므로, 스키마·시드 데이터를 바꾼 뒤엔 `docker compose down -v`로 볼륨을 지우고 다시 실행해야 함(기존 데이터도 같이 사라짐). 구글 로그인 테스트는 구글 콘솔 리디렉션 URI에 `http://localhost/login/oauth2/code/google`(포트 없음)이 등록되어 있어야 함.
+9. **CI/CD**: `develop`/`main` push나 PR마다 GitHub Actions(`ci.yml`)가 위 6~7번과 같은 테스트/lint/build를 자동으로 돌림. `deploy.yml`(main push 시 EC2 자동 배포)은 AWS 설정 완료 후에만 동작 — 판단 근거는 `docs/decisions.md` 참고.

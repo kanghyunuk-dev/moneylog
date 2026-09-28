@@ -132,6 +132,14 @@ localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `Csr
 - **해결**: `docker-compose.yml`의 `mysql` 서비스에 `LANG: C.UTF-8` 추가. 볼륨은 최초 1회만 초기화되므로 `docker compose down -v`로 지우고 재실행해야 반영됨.
 - **참고**: 채택 이유는 `docs/decisions.md` "백엔드 구현 판단" 참고.
 
+## Dashboard 재조회 useEffect가 `react-hooks/set-state-in-effect`에 걸림 (2026-09-28)
+
+`refresh` 함수(`useCallback`)를 `useEffect` 안으로 합치는 과정에서 겪은 문제.
+
+- **증상**: effect 몸체 첫 줄에서 곧장 `setIsLoading(true)`를 호출하면 lint 에러.
+- **원인**: effect의 동기 부분에서 바로 `setState`를 부르면 연쇄 렌더링을 유발할 수 있다는 React 규칙. 그 줄을 그냥 지우면 통과는 되지만 재조회 시 로딩 상태가 안 켜지는 동작 변화가 생겨 땜질에 가까움.
+- **해결**: effect 안에 `async` 함수를 선언해 `setIsLoading`/`try`/`finally`를 그 함수 안으로 옮기고, effect 몸체는 호출만 하게 함 — 기존 로딩 동작을 유지하면서 규칙도 만족.
+
 ## 구글 로그인 콜백이 `authorization_request_not_found`로 실패 (2026-09-20)
 
 `CookieOAuth2AuthorizationRequestRepository`의 쿠키를 `jakarta.servlet.http.Cookie`에서 `CookieUtils`(secure/sameSite 적용) 기반으로 교체한 직후, 실제 브라우저로 로그인을 테스트하며 겪은 문제.
