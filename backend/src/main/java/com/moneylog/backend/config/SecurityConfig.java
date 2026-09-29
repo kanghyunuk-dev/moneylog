@@ -1,5 +1,6 @@
 package com.moneylog.backend.config;
 
+import com.moneylog.backend.security.AppProperties;
 import com.moneylog.backend.security.oauth2.CookieOAuth2AuthorizationRequestRepository;
 import com.moneylog.backend.security.CsrfCookieFilter;
 import com.moneylog.backend.security.JWTAuthorizationFilter;
@@ -39,15 +40,17 @@ public class SecurityConfig {
             CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
             CustomAccessDeniedHandler customAccessDeniedHandler,
             OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler,
-            CookieOAuth2AuthorizationRequestRepository cookieOAuth2AuthorizationRequestRepository
+            CookieOAuth2AuthorizationRequestRepository cookieOAuth2AuthorizationRequestRepository,
+            AppProperties appProperties
     ) throws Exception {
         http
                 .csrf(CsrfConfigurer::spa)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource(appProperties)))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
@@ -71,9 +74,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource(AppProperties appProperties) {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of(appProperties.getFrontendUrl()));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

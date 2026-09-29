@@ -1,6 +1,6 @@
 import { getCookie } from "./cookie";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // 로그인요청 (httpOnly 쿠키로 토큰 요청)
 export async function loginRequest(email, password) {

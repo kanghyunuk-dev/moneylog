@@ -4,6 +4,7 @@ import com.moneylog.backend.security.CookieUtils;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
@@ -14,11 +15,13 @@ import java.time.Duration;
 import java.util.Base64;
 
 @Component
+@RequiredArgsConstructor
 public class CookieOAuth2AuthorizationRequestRepository implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
     public static final String COOKIE_NAME = "oauth2_auth_request";
     private static final Duration COOKIE_EXPIRE = Duration.ofSeconds(180);
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private final CookieUtils cookieUtils;
 
     @Override
     public OAuth2AuthorizationRequest loadAuthorizationRequest(HttpServletRequest request) {
@@ -43,7 +46,7 @@ public class CookieOAuth2AuthorizationRequestRepository implements Authorization
             return;
         }
 
-        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build(COOKIE_NAME, serialize(authorizationRequest), COOKIE_EXPIRE, "Lax").toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieUtils.build(COOKIE_NAME, serialize(authorizationRequest), COOKIE_EXPIRE, "Lax").toString());
     }
 
     @Override
@@ -54,7 +57,7 @@ public class CookieOAuth2AuthorizationRequestRepository implements Authorization
     }
 
     private void deleteCookie(HttpServletResponse response) {
-        response.addHeader(HttpHeaders.SET_COOKIE, CookieUtils.build(COOKIE_NAME, "", Duration.ZERO, "Lax").toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieUtils.build(COOKIE_NAME, "", Duration.ZERO, "Lax").toString());
     }
 
     private String serialize(OAuth2AuthorizationRequest authorizationRequest) {

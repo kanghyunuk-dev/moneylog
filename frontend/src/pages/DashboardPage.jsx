@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import './DashboardPage.css';
 import { getSummary, getCategoryBreakdown, getMonthlyTrend } from "../api/dashboard";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Legend } from 'recharts';
@@ -22,22 +22,23 @@ function DashboardPage() {
     // month 문자열 (yyyy-MM 형태, API 파라미터용)
     const monthParam = `${year}-${String(month).padStart(2, '0')}`;
 
-    // 요약 + 카테고리별 지출 조회 (같은 month 파라미터)
-    const refresh = useCallback(() => {
-        setIsLoading(true);
-        Promise.all([getSummary(monthParam), getCategoryBreakdown(monthParam)])
-            .then(([s, b]) => {
+    // 요약 + 카테고리별 지출을 같은 month 파라미터로 함께 조회, year/month 바뀔 때마다 재실행
+    useEffect(() => {
+        async function fetchDashboardData() {
+            setIsLoading(true);
+            try {
+                const [s, b] = await Promise.all([getSummary(monthParam), getCategoryBreakdown(monthParam)]);
                 setSummary(s);
                 setBreakdown(b);
-            })
-            .catch((err) => setError(err.message))
-            .finally(() => setIsLoading(false));
-    }, [monthParam]);
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setIsLoading(false);
+            }
+        }
 
-    // year, month 바뀔 때마다 재조회
-    useEffect(() => {
-        refresh();
-    }, [refresh]);
+        fetchDashboardData();
+    }, [monthParam]);
 
     // 추이 차트는 개월 수(trendMonths)만 바뀌면 재조회
     useEffect(() => {

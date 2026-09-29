@@ -1,6 +1,6 @@
 import { getCookie } from "./cookie";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // 인증된 요청 공통 옵션(쿠키 전송 + CSRF 헤더)을 만드는 함수
 function buildRequestOptions(options) {
