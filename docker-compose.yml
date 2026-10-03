@@ -81,8 +81,10 @@ services:
         max-file: "3"
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - certbot_www:/var/www/certbot
+      - certbot_conf:/etc/letsencrypt:ro
     depends_on:
       backend:
         condition: service_healthy
@@ -90,3 +92,4 @@ services:
 volumes:
   mysql_data:
   certbot_www:
+  certbot_conf:
