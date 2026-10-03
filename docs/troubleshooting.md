@@ -165,3 +165,19 @@ Redis 값 직렬화기를 설정하며, `com.fasterxml.jackson.databind.ObjectMa
 - **원인**: `spring-data-redis` 라이브러리 안에 이름이 거의 같은 두 클래스가 공존함 — `GenericJackson2JsonRedisSerializer`(`2`가 붙음, Jackson 2 전용, deprecated)와 `GenericJacksonJsonRedisSerializer`(`2` 없음, Jackson 3 전용). Spring Data Redis 공식 업그레이드 가이드(docs.spring.io)에 이 대응 규칙("2가 붙은 클래스 = 구버전 Jackson용")이 명시되어 있음. 또한 `ObjectMapper.builder()`가 아니라 `JsonMapper.builder()`(구체적 포맷 하위클래스)에서 시작해야 하고, `DefaultTyping`도 `ObjectMapper`의 이너 클래스가 아니라 `tools.jackson.databind` 패키지의 독립 클래스임.
 - **해결**: `GenericJacksonJsonRedisSerializer.builder().enableDefaultTyping(typeValidator).build()`로 교체 — `ObjectMapper`를 직접 조립할 필요 없이 Jackson 3 전용 빌더가 `PolymorphicTypeValidator`를 바로 받음. 참고로 신버전은 구버전과 달리 `PolymorphicTypeValidator` 없이는 다형성 역직렬화를 기본으로 켜지 않도록 설계가 바뀜(안전한 기본값으로 개선).
 - **판단 배경**: 안전한 역직렬화로 이 방식을 채택한 이유는 `docs/decisions.md` "백엔드 구현 판단" 참고.
+
+## Docker Compose 빌드 시 "compose build requires buildx" 에러 (2026-09-30)
+
+EC2에 Docker/Git 설치 후 `docker compose up --build -d`를 처음 실행하며 겪은 문제.
+
+- **증상**: MySQL/Redis 이미지는 정상적으로 받아졌지만, 백엔드/프론트 이미지 빌드 단계에서 "compose build requires buildx 0.17.0 or later"로 실패.
+- **원인**: Amazon Linux 2023의 `dnf install docker`가 설치하는 패키지엔 buildx 플러그인이 아예 없음.
+- **해결**: GitHub 릴리즈에서 buildx 바이너리를 직접 받아 `~/.docker/cli-plugins/docker-buildx`에 설치(실행 권한 부여 포함). compose 플러그인도 같은 방식으로 별도 설치 필요했음.
+
+## `.env`의 `GOOGLE_CLIENT_SECRET`이 빈 문자열로 적용됨 (2026-09-30)
+
+EC2에서 `nano`로 `.env`를 직접 타이핑해서 재작성한 뒤 겪은 문제.
+
+- **증상**: 구글 로그인 버튼 클릭 시 `/login?error`로 리다이렉트. `docker compose logs backend`에 `"GOOGLE_CLIENT_SECRET" variable is not set. Defaulting to a blank string.` 경고가 컨테이너 시작 전부터 찍혀있었음.
+- **원인**: `.env` 파일에서 `GOOGLE_CLIENT_SECRET=` 줄이 누락되거나 오타로 Docker Compose가 값을 못 읽음. `GOOGLE_CLIENT_ID`는 같은 경고가 없어 그 줄만 문제였음을 특정.
+- **해결**: `.env` 내용을 `cat`으로 재확인 후 정확한 값으로 재작성, `docker compose up -d`로 backend 컨테이너만 재생성(값만 바뀐 경우 `--build` 불필요).

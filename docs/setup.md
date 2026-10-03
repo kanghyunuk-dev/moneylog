@@ -25,4 +25,13 @@ git으로 코드/문서/DB 설계는 전부 그대로 넘어오지만, "그 컴�
    docker compose up --build
    ```
    mysql → redis → backend → nginx 순서로 `healthy`가 될 때까지 자동으로 기다림 — `http://localhost`로 접속해 확인. `docs/db-schema.sql` 초기화는 MySQL 볼륨이 비어있을 때 1회만 실행되므로, 스키마·시드 데이터를 바꾼 뒤엔 `docker compose down -v`로 볼륨을 지우고 다시 실행해야 함(기존 데이터도 같이 사라짐). 구글 로그인 테스트는 구글 콘솔 리디렉션 URI에 `http://localhost/login/oauth2/code/google`(포트 없음)이 등록되어 있어야 함.
-9. **CI/CD**: `develop`/`main` push나 PR마다 GitHub Actions(`ci.yml`)가 위 6~7번과 같은 테스트/lint/build를 자동으로 돌림. `deploy.yml`(main push 시 EC2 자동 배포)은 AWS 설정 완료 후에만 동작 — 판단 근거는 `docs/decisions.md` 참고.
+9. **CI/CD**: `develop`/`main` push나 PR마다 GitHub Actions(`ci.yml`)가 위 6~7번과 같은 테스트/lint/build를 자동으로 돌림. `deploy.yml`(main push 시 EC2 자동 배포)은 2026-10-03부터 실동작 중 — 상세는 10번 참고.
+10. **운영 서버(EC2) 접속/재배포**: `main`에 push하면 GitHub Actions가 자동으로 EC2에 재배포함. 직접 접속해서 확인/조치할 때:
+    ```
+    ssh -i <키페어.pem 경로> ec2-user@<Elastic IP>
+    cd ~/moneylog
+    docker compose ps                          # 컨테이너 상태 확인
+    docker compose logs <서비스명> --tail 50   # 에러 확인
+    docker compose up --build -d               # 수동 재배포(CD 실패 시 등)
+    ```
+    EC2의 `.env`(DB 비밀번호, JWT_SECRET 등)와 `.pem` 키 파일은 git으로 안 넘어오는 로컬 상태라, 분실하면 재발급/재작성 필요(`.pem`은 재발급 자체가 불가능하니 안전하게 보관).

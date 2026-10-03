@@ -114,6 +114,12 @@ DB 설계(위 섹션)가 정해진 뒤, 그걸 JPA 코드로 어떻게 다룰지
 - **`spring.jpa.show-sql`은 환경변수 대신 Spring Profile(`local`/`prod`)로 분리(2026-09-28)**: 배포 위치가 아니라 "로깅 레벨" 성격의 정적 설정이라, 실무에서도 이런 값은 환경변수보다 프로필별 properties 파일로 관리하는 게 정석 — `application-local.properties`(켬)/`application-prod.properties`(끔), `docker-compose.yml`은 `SPRING_PROFILES_ACTIVE=prod`만 지정.
 - **CI/CD는 GitHub Actions, CI/CD 워크플로우 파일도 분리(2026-09-28)**: 1인 프로젝트에 Jenkins는 별도 서버 유지보수 부담이 커서 배제. `ci.yml`(develop+main 대상)과 `deploy.yml`(main만 대상)을 나눠, develop에 push해도 배포 워크플로우 자체가 반응하지 않게 함 — 조건문 분기보다 파일 분리가 안전.
 - **Nginx에 Let's Encrypt challenge 경로를 미리 준비(2026-09-28)**: `/.well-known/acme-challenge/`가 SPA 폴백에 걸리면 인증서 발급이 실패함 — `certbot_www` 볼륨을 nginx에 미리 마운트해, 도메인이 생긴 뒤 certbot 연동만 추가하면 되게 함.
+- **Amazon Linux 2023은 compose/buildx 플러그인을 수동 설치(2026-09-30)**: `dnf install docker`로 설치되는 패키지엔 엔진만 있고 compose/buildx 플러그인이 빠져있음(AWS 공식 이슈로 등록된 알려진 결함) — Docker 공식 GitHub 릴리즈에서 바이너리를 직접 받아 `~/.docker/cli-plugins/`에 설치. Docker 공식 저장소를 추가하는 대안도 있으나 추가 설정이 더 필요해 배제.
+- **certbot은 호스트 설치 대신 컨테이너(1회성)로 실행(2026-09-30)**: `docker-compose.yml`이 이미 named volume(`certbot_www`) 기반으로 설계돼 있었고, Docker Compose 환경에서 공식적으로 더 널리 문서화된 패턴이라 일관성 차원에서 채택. 호스트 설치(valuepick 방식)도 유효한 대안이지만 기존 설계와 더 맞는 쪽을 선택.
+- **GitHub Actions CD의 SSH 접속을 위해 보안그룹 22번을 0.0.0.0/0으로 개방(2026-10-03)**: GitHub Actions 러너는 고정 IP가 아니라 매번 접속 IP가 바뀌어 "내 IP" 제한으로는 CD 자체가 불가능(`i/o timeout`으로 실제 실패 확인). 개인키 인증만으로 사실상 안전하다고 판단해 채택 — 더 안전한 "배포 시점에만 동적으로 IP 허용" 방식은 설정 복잡도 대비 지금 규모엔 과해 백로그로 남김.
+- **GitHub 브랜치 보호는 "Lock branch" 대신 "Require pull request + Require status checks"로 구성(2026-10-03)**: Lock branch는 PR을 통한 머지까지 전면 차단하는 "동결" 기능이라 실제 운영되는 `main`엔 안 맞음(PR 머지가 막히는 문제로 실제 확인). "승인 필요" 조건도 제외 — 1인 프로젝트라 승인해줄 사람이 없어 영구 차단 위험.
+- **`develop`과 `main`의 버전 번호 체계를 분리(2026-10-03)**: 둘 다 같은 `0.x` 카운터를 공유하면 서로 다른 커밋이 같은 버전 번호를 갖는 충돌이 생김 — `develop`은 계속 기능 단위로 `0.x` 증가, `main`은 독립적으로 `v1.0.0`부터 시작해 실제 배포 시점만 기록.
+- **Docker 로그 드라이버에 `max-size`/`max-file` 명시(2026-10-03)**: 기본 `json-file` 드라이버는 로그 파일 크기 제한이 없어 장기 운영 시 디스크 고갈 위험 — 실무 표준값(`10m`/`3`)으로 전체 컨테이너에 적용.
 
 ## 프론트엔드 구현 판단
 

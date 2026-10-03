@@ -46,7 +46,7 @@
 
 **제외**: 관리자 페이지 (1인용 도메인에 부적합, 2차 게시판형 프로젝트로 이관). 순서 변경 이유, 범위 결정 배경은 `docs/decisions.md` 참고.
 
-## 현재 상태 (2026-09-24 기준)
+## 현재 상태 (2026-10-03 기준)
 - [x] JWT/Spring Security 인증 개념 학습 완료 (8단계, `docs/troubleshooting.md` 참고)
 - [x] ①②②-2③ 기능 명세 확정 (`docs/specs.md`)
 - [x] DB 스키마 6개 테이블 설계 + MySQL 실행 검증 완료 (`docs/db-schema.sql`)
@@ -63,7 +63,10 @@
 - [x] **카테고리 아이콘(이모지) 도입 완료(2026-09-17)** — `category.icon` 컬럼 추가(고정 15개 매핑), 거래내역/예산 화면에 반영. 판단 근거는 `docs/decisions.md` 참고
 - [x] **홈 화면 완료(2026-09-17)** — 인사말, 목표 위젯(진행률), 요약 카드 3개, 최근 거래 5건, 바로가기 카드(거래 추가/통계) 구현. 이로써 ②-2단계 전체(목표자산+홈 화면) 마무리
 - [x] `bugfix/backlog-cleanup` 브랜치에서 백로그 정리 완료(2026-09-08) — 폼 state 문자열 통일, 카테고리 로딩 중 등록 모달 버튼 비활성화, `TransactionRepository` 동일 날짜 2차 정렬(`id`), `getTransactions()` N+1(fetch join), `month` 파라미터 에러 응답 형식 통일. 겸사겸사 로그인/회원가입 `<a href>`→`Link` 전환, JWT 만료시간 하드코딩 제거(`JWTProperties` 실제 주입)도 같이 처리. 판단 근거는 `docs/decisions.md` 참고
+- [x] **배포(v1.0.0) 전체 완료(2026-10-03)** — AWS EC2(t3.micro) + Docker Compose(MySQL/Redis/Backend/Nginx) + Route53 도메인 연결 + Let's Encrypt HTTPS + GitHub Actions CI/CD(main push 시 자동 배포) 전부 실동작 검증 완료. `https://moneylog.store`에서 전체 기능 운영 반영 확인. 판단 근거는 `docs/decisions.md`, 겪은 문제는 `docs/troubleshooting.md` 참고
 - [ ] (백로그, 급하지 않음) `GlobalExceptionHandler`의 프레임워크 예외 핸들러가 계속 늘어나면 `ResponseEntityExceptionHandler` 상속으로 전환 검토
+- [ ] 모바일 반응형 미적용(CSS 11개 중 2개만 미디어 쿼리 보유) — 화면 단위로 나눠 별도 브랜치에서 진행 예정
+- [ ] README.md 내용 보강(현재 2줄뿐) — 프로젝트 소개/기술 스택/배포 주소/실행 방법
 
 다른 컴퓨터에서 이어갈 때는 `docs/setup.md` 체크리스트부터 확인.
 
