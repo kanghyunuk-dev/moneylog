@@ -1,0 +1,30 @@
+import LoginPage from "./pages/LoginPage";
+import {Routes, Route} from "react-router";
+import SignupPage from "./pages/SignupPage";
+import PrivateRoute from "./components/PrivateRoute";
+import HomePage from "./pages/HomePage";
+import MyPage from "./pages/MyPage";
+import Layout from "./components/Layout";
+import TransactionsPage from "./pages/TransactionsPage";
+import BudgetsPage from "./pages/BudgetsPage";
+import DashboardPage from "./pages/DashboardPage";
+import GoalsPage from "./pages/GoalsPage";
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage/>} />
+      <Route path="/signup" element={<SignupPage/>} />
+      <Route element={<PrivateRoute><Layout/></PrivateRoute>}>
+        <Route path="/" element={<HomePage/>} />
+        <Route path="/mypage" element={<MyPage/>} />
+        <Route path="/transactions" element={<TransactionsPage/>} />
+        <Route path="/budgets" element={<BudgetsPage/>} />
+        <Route path="/dashboard" element={<DashboardPage/>} />
+        <Route path="/goals" element={<GoalsPage/>} />
+      </Route>
+    </Routes>
+  );
+}
+
+export default App

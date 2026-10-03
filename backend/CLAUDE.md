@@ -1,0 +1,43 @@
+# Backend 컨벤션
+
+루트 `CLAUDE.md`(목적/스택/진행순서)를 먼저 참고. 여기는 backend 코드를 짤 때 지키는 실무 규칙을 담는다. 판단 근거는 `docs/decisions.md`의 "백엔드 구현 판단" 섹션 참고.
+
+## 패키지 구조
+`com.moneylog.backend` 하위를 `controller`(요청/응답) / `service`(비즈니스 로직) / `repository`(DB 접근) / `entity`(`docs/db-schema.sql` 매핑) / `dto`(API 전달용, Entity 직접 노출 안 함) / `exception`(커스텀 예외 + 전역 처리기)으로 분리. 특정 도메인에 속하지 않는 횡단 관심사는 `security`(인증/인가), `scheduler`(주기적 배치 작업)처럼 별도 폴더로 분리.
+- 이유: 책임이 섞이면 문제 원인 구분이 어려워지고 테스트도 힘들어짐. Repository/Entity는 JPA 관례 이름이지만 역할 자체는 MyBatis 등에서도 이름만 바꿔(Mapper·DAO, VO) 동일하게 쓰이는 범용 개념.
+
+## JPA 규칙
+- `ddl-auto=validate` 고정, 스키마 변경은 `docs/db-schema.sql`을 먼저 고치고 반영한 뒤 Entity를 맞추는 순서.
+- FK 정책은 스키마 그대로 반영(User 참조 CASCADE, Category 참조 RESTRICT).
+- 모든 연관관계 `FetchType.LAZY` 명시(`@ManyToOne`/`@OneToOne`은 기본값이 EAGER라 필수), 필요한 곳만 `fetch join`.
+- 카테고리 사용자 정의 확장(나중 작업)은 `category`에 `user_id` 컬럼 추가하는 안이 유력 후보. 카테고리 아이콘은 이 확장과 별개로 전역 고정값(`category.icon`) — 판단 근거는 `docs/decisions.md` 참고.
+
+## 코드 스타일
+- Entity: `@Getter` + 필요한 것만(`@ToString(exclude=연관관계)`, `@EqualsAndHashCode(of="id")`) + `@NoArgsConstructor(PROTECTED)` + `@Builder`. `@Data`/setter 금지 — 상태 변경은 `changePassword()`처럼 의도가 담긴 메서드로만.
+- DTO: Java `record` 사용, 필드 많으면 `@Builder` 추가. `dto/request`/`dto/response`로 폴더 분리. 등록/수정에 필요한 필드가 같으면 DTO 하나 공유(`TransactionRequest`), 다르면 분리(`BudgetCreateRequest`/`BudgetUpdateRequest`) — 공유 시 검증 규칙이 두 상황에 안 맞을 위험이 있으면 분리.
+- 생성자 주입만 사용(필드 `@Autowired` 금지) — 생성자가 하나면 Spring이 자동 인식해 `@Autowired` 생략 가능.
+
+## 인증/보안
+- Spring Boot 4.0.7 → Spring Security 7.0.6(`./gradlew dependencies`로 확인, 버전은 항상 재확인하고 추측 금지). 구버전 DSL(`authorizeRequests()` 등) 금지.
+- JWT AccessToken 30분/RefreshToken 7일, RefreshToken은 계속 `refresh_token` 테이블(MySQL) 저장 — Redis로 이전하지 않기로 확정, 판단 근거는 `docs/decisions.md` 참고.
+- 탈퇴 여부는 `PrincipalDetailsService.loadUserByUsername()`에서 Redis 캐시(`security/UserAuthCache`, 5분 TTL) 우선 확인 후 DB 재조회, `AuthService.refresh()`는 여전히 매 요청 DB 재조회. 탈퇴 시 캐시는 트랜잭션 커밋 후(`TransactionSynchronizationManager.afterCommit()`) 무효화 — 판단 근거는 `docs/decisions.md` 참고.
+- 로그아웃/탈퇴 시 그 시점 AccessToken을 `security/TokenBlacklistService`로 Redis에 블랙리스트 등록(TTL=토큰 잔여 만료시간, 키는 SHA-256 해시), `JWTAuthorizationFilter`가 서명 검증 다음에 블랙리스트 여부를 확인.
+- Redis 값 직렬화는 `config/RedisConfig`의 `GenericJacksonJsonRedisSerializer`(Jackson 3용, `GenericJackson2JsonRedisSerializer`는 deprecated)를 `PolymorphicTypeValidator`로 `com.moneylog.backend.security` 패키지만 역직렬화 허용하도록 제한해서 사용 — 판단 근거는 `docs/decisions.md` 참고.
+- Redis 호출부(`TokenBlacklistService`, `PrincipalDetailsService`, `UserService`의 `afterCommit`)는 `DataAccessException`을 잡아 `log.warn` 후 폴백(블랙리스트 확인 실패=통과, 캐시 조회 실패=DB 조회) — Redis 장애가 인증 전체를 막지 않는 fail-open 구조, 새로 Redis를 호출하는 코드도 같은 패턴을 따를 것. 타임아웃은 `spring.data.redis.timeout=250ms`/`connect-timeout=100ms`(AWS ElastiCache 권장값). 판단 근거는 `docs/decisions.md` 참고.
+- 회원탈퇴(`DELETE /api/users/me`, 비밀번호 확인 필요 — 소셜 가입자는 `password`가 NULL이라 확인 생략)는 소프트 삭제 처리, `UserCleanupScheduler`(`scheduler` 패키지)가 30일 뒤 하드 삭제.
+- 토큰은 응답 바디가 아니라 httpOnly `ResponseCookie`(`secure`는 `app.cookie-secure`/`COOKIE_SECURE` 환경변수로 제어, 로컬 기본값 `false`)로 발급 — `AuthController`의 `login`/`refresh`/`logout`, `UserController`의 `withdraw`가 각각 발급·재발급·만료(`maxAge(0)`)를 담당, 쿠키 생성 로직은 `security/CookieUtils`(`AppProperties`를 주입받는 `@Component`)로 공통화. `JWTAuthorizationFilter`는 `Authorization` 헤더가 아니라 쿠키에서 토큰을 읽음.
+- CORS 허용 도메인(`SecurityConfig.corsConfigurationSource`)도 `AppProperties.frontendUrl`을 재사용(프론트가 있는 주소라는 같은 개념). Nginx 같은 리버스 프록시 뒤에서 실제 프로토콜/호스트를 인식하도록 `server.forward-headers-strategy=native` 설정 — 프록시가 `X-Forwarded-*` 헤더를 넘겨줘야 짝이 맞음.
+- CSRF는 `SecurityConfig`에서 `CsrfConfigurer::spa()`(Spring Security 7의 SPA 전용 설정, 채택 이유는 `docs/decisions.md` "백엔드 구현 판단" 참고)로 활성화하고, `CsrfCookieFilter`(직접 작성, `CsrfFilter` 뒤에 배치)로 `XSRF-TOKEN` 쿠키 생성을 강제 트리거 — 이 필터가 왜 필요했는지(403 에러 실제 재현/원인/해결)는 `docs/troubleshooting.md` 참고.
+- 로그인 상태 확인은 `GET /api/auth/me`(SecurityContext의 인증 여부로 200/401 응답), 로그아웃은 `POST /api/auth/logout`(쿠키 만료 + DB의 RefreshToken 삭제).
+- 소셜로그인(구글)은 `SecurityConfig`의 `.oauth2Login(...)`으로 구성, OAuth2 state는 STATELESS 정책 유지를 위해 세션 대신 `security/oauth2/CookieOAuth2AuthorizationRequestRepository`(쿠키 저장, Jackson JSON 직렬화 — Java 표준 직렬화 금지, 안전하지 않은 역직렬화 위험)로 관리. 이 쿠키만 `CookieUtils.build(..., "Lax")`로 발급(다른 쿠키는 `"Strict"` 기본값) — OAuth2 콜백이 교차 사이트 리다이렉트라 `Strict`면 쿠키가 안 실림. 로그인 성공 처리는 `security/oauth2/OAuth2LoginSuccessHandler`, 프론트 리다이렉트 주소는 하드코딩 대신 `AppProperties`(`app.frontend-url`, `FRONTEND_URL` 환경변수로 배포 환경마다 덮어씀)로 관리. 판단 근거는 `docs/decisions.md` 참고.
+
+## 환경 설정
+- `application.properties`(공통) + `application-local.properties`/`application-prod.properties`(환경별, `spring.jpa.show-sql`처럼 "로깅 레벨" 성격의 정적 설정)로 분리, 기본 프로필은 `local`이고 배포 시 `SPRING_PROFILES_ACTIVE=prod`로 덮어씀. DB 접속 정보·프론트 주소처럼 배포 환경마다 값 자체가 달라지는 설정은 계속 `${ENV_VAR:기본값}` 환경변수 패턴 — 판단 근거는 `docs/decisions.md` 참고.
+
+## 예외 처리
+- 도메인 의미가 담긴 커스텀 예외(`DuplicateEmailException` 등, 앞으로 생길 유사 상황도 같은 패턴)를 던지고, `GlobalExceptionHandler`(`@RestControllerAdvice`) 하나가 모든 예외→HTTP 응답(상태 코드+메시지)을 일괄 변환. 자바 표준 예외(`IllegalArgumentException` 등) 즉석 사용 금지 — 의미가 모호하고 처리 로직이 Controller마다 흩어짐.
+- Spring Security 필터 단계(MVC 이전)의 인증/인가 실패는 `GlobalExceptionHandler`가 못 잡음 — `security/handler/`(`CustomAuthenticationEntryPoint`=401, `CustomAccessDeniedHandler`=403)에서 별도 처리, 응답 형식은 동일하게 `ErrorResponse` 재사용.
+
+## 테스트
+- Mockito(`@ExtendWith(MockitoExtension.class)` + `@Mock`/`@InjectMocks`) 기반 단위 테스트, AssertJ(`assertThat`)로 검증. given/when/then 주석으로 단계 구분, 테스트 메서드명은 한글로 "~하면_~된다" 형태(예: `유효한_토큰이면_SecurityContext에_인증정보가_설정된다`).
+- 지금까지는 인증/인가처럼 분기가 많고 매 요청마다 실행되는, 파급력 큰 로직(`JWTAuthorizationFilter` 등) 위주로 작성. 단순 CRUD는 실동작 확인으로 충분하다고 판단해 테스트 생략.

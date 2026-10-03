@@ -1,0 +1,269 @@
+.home-page {
+    width: 100%;
+}
+
+.home-page .error-message {
+    color: var(--error);
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+.home-greeting-sub {
+    color: var(--text);
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.home-greeting-name {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.home-goal-card {
+    display: block;
+    background: var(--card-bg);
+    border: 1px solid var(--accent-border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.home-goal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.home-goal-label {
+    color: var(--text);
+    font-size: 13px;
+}
+
+.home-goal-percent {
+    color: var(--accent);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.home-goal-card h2 {
+    font-size: 18px;
+    margin-bottom: 14px;
+}
+
+.home-progress-track {
+    width: 100%;
+    height: 10px;
+    background: var(--bg);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.home-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 999px;
+}
+
+.home-goal-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: var(--text);
+}
+
+.home-goal-footer span:first-child {
+    font-weight: 700;
+    color: var(--text-h);
+}
+
+.home-goal-empty {
+    display: block;
+    background: var(--card-bg);
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: var(--accent);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.home-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.home-summary-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.home-summary-label {
+    font-size: 13px;
+    color: var(--text);
+}
+
+.home-summary-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-h);
+}
+
+.home-summary-value.income {
+    color: var(--success);
+}
+
+.home-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.home-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.home-panel-header h2 {
+    font-size: 16px;
+}
+
+.home-panel-header a {
+    font-size: 13px;
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.home-panel-header a:hover {
+    text-decoration: underline;
+}
+
+.home-transaction-list {
+    list-style: none;
+}
+
+.home-transaction-list li {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.home-transaction-list li:last-child {
+    border-bottom: none;
+}
+
+.home-transaction-icon {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    border-radius: 50%;
+    font-size: 16px;
+    margin-right: 12px;
+}
+
+.home-transaction-info {
+    flex: 1;
+}
+
+.home-transaction-memo {
+    color: var(--text-h);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.home-transaction-meta {
+    color: var(--text);
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.home-transaction-amount {
+    font-weight: 600;
+    font-size: 14px;
+    margin-left: auto;
+}
+
+.home-transaction-amount.income {
+    color: var(--success);
+}
+
+.home-transaction-amount.expense {
+    color: var(--text-h);
+}
+
+.home-shortcuts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.home-shortcut-card {
+    display: block;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.home-shortcut-card:hover {
+    border-color: var(--accent-border);
+}
+
+.home-shortcut-icon {
+    display: block;
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.home-shortcut-title {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-h);
+    margin-bottom: 4px;
+}
+
+.home-shortcut-desc {
+    display: block;
+    font-size: 13px;
+    color: var(--text);
+}
+
+.home-page .empty-message {
+    color: var(--text);
+    font-size: 14px;
+    padding: 20px 0;
+}
+
+@media (max-width: 700px) {
+    .home-summary-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .home-shortcuts {
+        grid-template-columns: 1fr;
+    }
+}
