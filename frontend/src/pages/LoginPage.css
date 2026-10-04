@@ -6,6 +6,12 @@
     width: 100%;
 }
 
+@media (max-width: 700px) {
+    .login-page {
+        padding: 40px 16px;
+    }
+}
+
 /* 로고 영역 */
 .login-logo {
     text-align: center;

@@ -181,3 +181,27 @@ EC2에서 `nano`로 `.env`를 직접 타이핑해서 재작성한 뒤 겪은 문
 - **증상**: 구글 로그인 버튼 클릭 시 `/login?error`로 리다이렉트. `docker compose logs backend`에 `"GOOGLE_CLIENT_SECRET" variable is not set. Defaulting to a blank string.` 경고가 컨테이너 시작 전부터 찍혀있었음.
 - **원인**: `.env` 파일에서 `GOOGLE_CLIENT_SECRET=` 줄이 누락되거나 오타로 Docker Compose가 값을 못 읽음. `GOOGLE_CLIENT_ID`는 같은 경고가 없어 그 줄만 문제였음을 특정.
 - **해결**: `.env` 내용을 `cat`으로 재확인 후 정확한 값으로 재작성, `docker compose up -d`로 backend 컨테이너만 재생성(값만 바뀐 경우 `--build` 불필요).
+
+## `authFetch`의 토큰 재발급이 항상 "실패"로 처리됨 (2026-10-04)
+
+프론트엔드 전면 마무리 작업 중 `authFetch.js`의 토큰 재발급 로직을 single-flight 패턴으로 바꾸려다 기존 코드에서 실제로 겪은 문제.
+
+- **증상**: RefreshToken이 멀쩡히 남아있는데도 AccessToken이 만료되면 곧바로 로그인 화면으로 튕겨나감.
+- **원인**: 진행 중인 refresh 요청을 저장해두는 모듈 스코프 변수(`refreshPromise`)가 선언돼 있지 않았고, `await`한 fetch 결과를 그 변수가 아니라 엉뚱한 변수(`response`)에 저장하고 있었음 — 함수가 실제 재발급 성공 여부와 무관하게 항상 `undefined`(falsy)를 반환해 호출부가 매번 "재발급 실패"로 처리.
+- **해결**: `refreshPromise`를 모듈 스코프에 제대로 선언하고, 이미 진행 중인 refresh가 있으면 새로 요청을 보내지 않고 그 프로미스를 같이 기다리는 single-flight 패턴으로 재작성.
+
+## AbortController 도입 후 DashboardPage가 크래시 (2026-10-04)
+
+월별 조회에 `AbortController`를 도입하는 과정에서 실제로 겪은 문제.
+
+- **증상**: `Cannot read properties of null (reading 'totalIncome')`로 화면이 깨짐. `ErrorBoundary`가 전체 화이트스크린을 막아준 걸 실제로 확인.
+- **원인**: 요청이 취소(`AbortError`)될 때도 `finally`가 실행되어 `isLoading`이 `false`가 되는데, 성공 데이터(`summary`)는 여전히 `null`인 상태로 남아 렌더링이 그대로 진행됨.
+- **해결**: `finally`를 제거하고, 성공했을 때와 실제 에러(`AbortError`가 아닐 때)일 때만 `setIsLoading(false)`를 호출.
+
+## 로그아웃 버튼을 눌러도 보던 페이지가 그대로 유지됨 (2026-10-04)
+
+`Sidebar`의 로그아웃 버튼을 실제로 눌러보며 겪은 문제.
+
+- **증상**: 로그아웃 클릭 후 로그인 페이지로 넘어가지 않고 기존에 보던 페이지가 계속 보임.
+- **원인**: `logout()` API 호출이 끝난 뒤 `navigate('/login')`하는 순서였는데, `PrivateRoute`가 `isLoggedIn` 상태 변화를 감지해 자체적으로 리다이렉트를 시도하는 경로와 수동 `navigate()` 호출이 경쟁(race)해 타이밍에 따라 반영이 누락됨.
+- **해결**: 순서를 바꿔 먼저 `/login`으로 이동시키고 그 다음 로그아웃 API를 호출 — 판단 배경은 `docs/decisions.md` "프론트엔드 구현 판단" 참고.

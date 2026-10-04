@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import './TransactionsPage.css';
 import { getTransactions, createTransaction, updateTransaction, deleteTransaction } from "../api/transaction";
 import { getCategories } from "../api/category";
+import Modal from "../components/Modal";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 function TransactionsPage() {
     const now = new Date();
@@ -15,6 +17,7 @@ function TransactionsPage() {
     const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [categoriesError, setCategoriesError] = useState(false);
 
     // month 문자열 (yyyy-MM 형태, API 파라미터용)
     const monthParam = `${year}-${String(month).padStart(2, '0')}`;
@@ -31,25 +34,39 @@ function TransactionsPage() {
     const [formMemo, setFormMemo] = useState('');
     const [formError, setFormError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
     // 거래 목록 조회
-    const refreshTransactions = useCallback(() => {
-        getTransactions(monthParam)
-            .then((data) => setTransactions(data))
-            .catch((err) => setError(err.message))
-            .finally(() => setIsLoading(false));
+    const refreshTransactions = useCallback(async (signal) => {
+        setError('');
+        try {
+            const data = await getTransactions(monthParam, signal);
+            setTransactions(data);
+            setIsLoading(false);
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                setError(err.message);
+                setIsLoading(false);
+            }
+        }
     }, [monthParam]);
 
     // 거래 목록 조회 (year, month 바뀔 때마다 재조회)
     useEffect(() => {
-        refreshTransactions();
+        const controller = new AbortController();
+
+        async function load() {
+            await refreshTransactions(controller.signal);
+        }
+        load();
+        return () => controller.abort();
     }, [refreshTransactions]);
 
     // 카테고리 목록은 한 번만 조회
     useEffect(() => {
         getCategories()
             .then((data) => setCategories(data))
-            .catch(() => setCategories([]))
+            .catch(() => setCategoriesError(true))
             .finally(() => setIsCategoriesLoading(false));
     }, [])
 
@@ -129,11 +146,12 @@ function TransactionsPage() {
     }
 
     // 거래 삭제
-    async function handleDelete() {
-        if(!window.confirm('정말 삭제하시겠습니까?')) {
-            return;
-        }
+    function handleDeleteClick() {
+        setIsConfirmOpen(true);
+    }
 
+    async function handleDeleteConfirm() {
+        setIsConfirmOpen(false);
         setFormError('');
         setIsSubmitting(true);
 
@@ -150,13 +168,14 @@ function TransactionsPage() {
 
     return (
         <div className="transactions-page">
+            <title>거래내역 · MoneyLog</title>
             <div className="transactions-header">
                 <div>
                     <h1>거래내역</h1>
                     <p>수입과 지출을 한눈에</p>
                 </div>
-                <button type="button" className="add-button" onClick={handleAddStart} disabled={isCategoriesLoading}>
-                    {isCategoriesLoading ? '불러오는 중...' : '+ 거래 추가'}
+                <button type="button" className="add-button" onClick={handleAddStart} disabled={isCategoriesLoading || categoriesError}>
+                    {isCategoriesLoading ? '불러오는 중...' : categoriesError ? '카테고리 로딩 실패' : '+ 거래 추가'}
                 </button>
             </div>
 
@@ -166,13 +185,13 @@ function TransactionsPage() {
                 <button type="button" onClick={handleNextMonth}>›</button>
             </div>
 
-            {error && <p className='error-message'>{error}</p>}
+            {error && <p role="alert" className="error-message">{error}</p>}
 
             {isLoading ? (
-                <p>불러오는중 ...</p>
-            ) : (
+                <p role="status">불러오는 중...</p>
+            ) : error ? null : (
                 <div className="transaction-list">
-                    {groupedTransactions.length === 0 && <p className='empty-message'>이 달의 내역이 없습니다</p>}
+                    {groupedTransactions.length === 0 && <p className="empty-message">이 달의 내역이 없습니다</p>}
                     {groupedTransactions.map((group) => (
                         <div key={group.date} className="transaction-group">
                             <div className="group-date">{group.date}</div>
@@ -193,13 +212,12 @@ function TransactionsPage() {
                 </div>
             )}
 
-            {isModalOpen && (
-                <div className="modal-overlay">
-                    <form className="modal-content" onSubmit={handleFormSubmit}>
+            <Modal isOpen={isModalOpen} onClose={handleModalClose} className="modal-content">
+                <form onSubmit={handleFormSubmit}>
                         <h2>{editingTransaction ? '거래 수정' : '거래 추가'}</h2>
 
-                        <label>카테고리</label>
-                        <select value={formCategoryId} onChange={(e) => setFormCategoryId(e.target.value)} required>
+                        <label htmlFor="category">카테고리</label>
+                        <select id="category" value={formCategoryId} onChange={(e) => setFormCategoryId(e.target.value)} required>
                             <option value="">선택하세요</option>
                             {categories.map((c) => (
                                 <option key={c.id} value={c.id}>
@@ -208,20 +226,20 @@ function TransactionsPage() {
                             ))}
                         </select>
 
-                        <label>금액</label>
-                        <input type="number" placeholder="금액 입력" value={formAmount} onChange={(e) => setFormAmount(e.target.value)} required />
+                        <label htmlFor="amount">금액</label>
+                        <input id="amount" type="number" placeholder="금액 입력" value={formAmount} onChange={(e) => setFormAmount(e.target.value)} required />
 
-                        <label>날짜</label>
-                        <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} required />
+                        <label htmlFor="date">날짜</label>
+                        <input id="date" type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} required />
 
-                        <label>메모</label>
-                        <input type="text" placeholder="메모 (선택)" value={formMemo} onChange={(e) => setFormMemo(e.target.value)} />
+                        <label htmlFor="memo">메모</label>
+                        <input id="memo" type="text" placeholder="메모 (선택)" value={formMemo} onChange={(e) => setFormMemo(e.target.value)} autoComplete="off" />
 
-                        {formError && <p className="error-message">{formError}</p>}
+                        {formError && <p role="alert" className="error-message">{formError}</p>}
 
                         <div className="modal-actions">
                             {editingTransaction && (
-                                <button type='button' className='delete-button' onClick={handleDelete} disabled={isSubmitting}>
+                                <button type="button" className="delete-button" onClick={handleDeleteClick} disabled={isSubmitting}>
                                     {isSubmitting ? '삭제 중 ...' : '삭제'}
                                 </button>
                             )}
@@ -230,9 +248,15 @@ function TransactionsPage() {
                                 {isSubmitting ? '저장 중...' : '저장'}
                             </button>
                         </div>
-                    </form>
-                </div>
-            )}     
+                </form>
+            </Modal>
+
+            <ConfirmDialog
+                isOpen={isConfirmOpen}
+                message="정말 삭제하시겠습니까?"
+                onConfirm={handleDeleteConfirm}
+                onCancel={() => setIsConfirmOpen(false)}
+            />
         </div>
     );
 }

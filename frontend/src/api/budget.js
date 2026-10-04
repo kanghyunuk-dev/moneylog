@@ -1,8 +1,8 @@
 import { authFetch } from "./authFetch";
 
 // 예산 목록 조회(월 단위)
-export async function getBudgets(month) {
-    const response = await authFetch(`/api/budgets?month=${month}`);
+export async function getBudgets(month, signal) {
+    const response = await authFetch(`/api/budgets?month=${month}`, { signal });
 
     if(!response.ok) {
         throw new Error("예산 목록을 불러오지 못했습니다");

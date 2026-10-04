@@ -15,31 +15,41 @@ function HomePage() {
     const [error, setError] = useState('');
 
     useEffect(() => {
-    const now = new Date();
-    const monthParam = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        async function fetchHomeData() {
+            setError('');
+            const now = new Date();
+            const monthParam = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-    Promise.all([getMyInfo(), getSummary(monthParam), getTransactions(monthParam), getGoals()])
-        .then(([userInfo, summaryData, transactions, goals]) => {
-            setNickname(userInfo.nickname);
-            setSummary(summaryData);
-            setRecentTransactions(
-                [...transactions]
-                    .sort((a, b) => b.transactionDate.localeCompare(a.transactionDate))
-                    .slice(0, 5)
-            );
-            setActiveGoal(goals.find((g) => g.status === 'ACTIVE') ?? null);
-        })
-        .catch((err) => setError(err.message))
-        .finally(() => setIsLoading(false));
+            try {
+                const [userInfo, summaryData, transactions, goals] = await Promise.all([
+                    getMyInfo(), getSummary(monthParam), getTransactions(monthParam), getGoals()
+                ]);
+                setNickname(userInfo.nickname);
+                setSummary(summaryData);
+                setRecentTransactions(
+                    [...transactions]
+                        .sort((a, b) => b.transactionDate.localeCompare(a.transactionDate))
+                        .slice(0, 5)
+                );
+                setActiveGoal(goals.find((g) => g.status === 'ACTIVE') ?? null);
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        fetchHomeData();
     }, []);
 
     return (
         <div className="home-page">
-            {error && <p className="error-message">{error}</p>}
+            <title>홈 · MoneyLog</title>
+            {error && <p role="alert" className="error-message">{error}</p>}
 
             {isLoading ? (
-                <p>불러오는중 ...</p>
-            ) : (
+                <p role="status">불러오는 중...</p>
+            ) : error ? null : (
                 <>
                     <p className="home-greeting-sub">안녕하세요</p>
                     <h1 className="home-greeting-name">{nickname}님 👋</h1>

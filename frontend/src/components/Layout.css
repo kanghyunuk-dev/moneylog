@@ -9,3 +9,33 @@
     background: var(--bg);
     padding: 32px 40px;
 }
+
+/* 모바일에서 사이드바를 열기 위한 버튼 - 데스크톱에는 항상 숨김 */
+.mobile-topbar-toggle {
+    display: none;
+}
+
+@media (max-width: 700px) {
+    .mobile-topbar-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        z-index: 100;
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 8px;
+        background: var(--card-bg);
+        color: var(--text-h);
+        box-shadow: var(--shadow);
+        font-size: 18px;
+        cursor: pointer;
+    }
+
+    .app-content {
+        padding: 72px 16px 32px;
+    }
+}
