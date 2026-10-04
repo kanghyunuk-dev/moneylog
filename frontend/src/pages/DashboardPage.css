@@ -202,3 +202,13 @@
     font-size: 13px;
     margin-bottom: 12px;
 }
+
+@media (max-width: 700px) {
+    .dashboard-page .summary-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-panels {
+        grid-template-columns: 1fr;
+    }
+}

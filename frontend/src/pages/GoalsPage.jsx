@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import './GoalsPage.css';
 import { getGoals, createGoal, updateGoal, deleteGoal } from "../api/goal";
+import Modal from "../components/Modal";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 function GoalsPage() {
     const [goals, setGoals] = useState([]);
@@ -14,17 +16,27 @@ function GoalsPage() {
     const [formDeadline, setFormDeadline] = useState('');
     const [formError, setFormError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
     // 목표 목록 조회
-    const refresh = useCallback(() => {
-        getGoals()
-            .then((data) => setGoals(data))
-            .catch((err) => setError(err.message))
-            .finally(() => setIsLoading(false));
+    const refresh = useCallback(async () => {
+        setError('');
+        try {
+            const data = await getGoals();
+            setGoals(data);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
     }, []);
 
     useEffect(() => {
-        refresh();
+        async function load() {
+            await refresh();
+        }
+
+        load();
     }, [refresh]);
 
     const activeGoal = goals.find((g) => g.status === 'ACTIVE');
@@ -81,11 +93,13 @@ function GoalsPage() {
         }
     }
 
-    async function handleDelete() {
-        if (!window.confirm('정말 삭제하시겠습니까?')) {
-            return;
-        }
+    // 목표 삭제 - 삭제 버튼은 확인창만 먼저 염
+    function handleDeleteClick() {
+        setIsConfirmOpen(true);
+    }
 
+    async function handleDeleteConfirm() {
+        setIsConfirmOpen(false);
         setFormError('');
         setIsSubmitting(true);
 
@@ -111,6 +125,7 @@ function GoalsPage() {
 
     return (
         <div className="goals-page">
+            <title>목표자산 · MoneyLog</title>
             <div className="goals-header">
                 <div>
                     <h1>목표자산</h1>
@@ -119,11 +134,11 @@ function GoalsPage() {
                 <button type="button" className="add-button" onClick={handleAddStart}>+ 목표 추가</button>
             </div>
 
-            {error && <p className="error-message">{error}</p>}
+            {error && <p role="alert" className="error-message">{error}</p>}
 
             {isLoading ? (
-                <p>불러오는중 ...</p>
-            ) : (
+                <p role="status">불러오는 중...</p>
+            ) : error ? null : (
                 <>
                     {activeGoal && (
                         <div className="active-goal-card" onClick={() => handleEditStart(activeGoal)}>
@@ -166,25 +181,24 @@ function GoalsPage() {
                 </>
             )}
 
-            {isModalOpen && (
-                <div className="modal-overlay">
-                    <form className="modal-content" onSubmit={handleFormSubmit}>
+            <Modal isOpen={isModalOpen} onClose={handleModalClose} className="modal-content">
+                <form onSubmit={handleFormSubmit}>
                         <h2>{editingGoal?.status === 'DONE' ? '완료된 목표' : editingGoal ? '목표 수정' : '목표 추가'}</h2>
 
-                        <label>목표명</label>
-                        <input type="text" placeholder="예: 내 집 마련" value={formName} onChange={(e) => setFormName(e.target.value)} disabled={editingGoal?.status === 'DONE'} required />
+                        <label htmlFor="goal-name">목표명</label>
+                        <input id="goal-name" type="text" placeholder="예: 내 집 마련" value={formName} onChange={(e) => setFormName(e.target.value)} disabled={editingGoal?.status === 'DONE'} required />
 
-                        <label>목표 금액</label>
-                        <input type="number" placeholder="목표 금액 입력" value={formTargetAmount} onChange={(e) => setFormTargetAmount(e.target.value)} disabled={editingGoal?.status === 'DONE'} required />
+                        <label htmlFor="goal-amount">목표 금액</label>
+                        <input id="goal-amount" type="number" placeholder="목표 금액 입력" value={formTargetAmount} onChange={(e) => setFormTargetAmount(e.target.value)} disabled={editingGoal?.status === 'DONE'} required />
 
-                        <label>마감일 (선택)</label>
-                        <input type="date" value={formDeadline} onChange={(e) => setFormDeadline(e.target.value)} disabled={editingGoal?.status === 'DONE'} />
+                        <label htmlFor="goal-deadline">마감일 (선택)</label>
+                        <input id="goal-deadline" type="date" value={formDeadline} onChange={(e) => setFormDeadline(e.target.value)} disabled={editingGoal?.status === 'DONE'} />
 
-                        {formError && <p className="error-message">{formError}</p>}
+                        {formError && <p role="alert" className="error-message">{formError}</p>}
 
                         <div className="modal-actions">
                             {editingGoal && (
-                                <button type="button" className="delete-button" onClick={handleDelete} disabled={isSubmitting}>
+                                <button type="button" className="delete-button" onClick={handleDeleteClick} disabled={isSubmitting}>
                                     {isSubmitting ? '삭제 중 ...' : '삭제'}
                                 </button>
                             )}
@@ -195,9 +209,15 @@ function GoalsPage() {
                                 </button>
                             )}
                         </div>
-                    </form>
-                </div>
-            )}
+                </form>
+            </Modal>
+
+            <ConfirmDialog
+                isOpen={isConfirmOpen}
+                message="정말 삭제하시겠습니까?"
+                onConfirm={handleDeleteConfirm}
+                onCancel={() => setIsConfirmOpen(false)}
+            />
         </div>
     );
 }

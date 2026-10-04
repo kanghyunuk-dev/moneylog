@@ -6,6 +6,12 @@
     width: 100%;
 }
 
+@media (max-width: 700px) {
+    .signup-page {
+        padding: 40px 16px;
+    }
+}
+
 /* 로고 영역 */
 .signup-logo {
     text-align: center;

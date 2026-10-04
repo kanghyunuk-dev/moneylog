@@ -22,8 +22,13 @@ export function AuthProvider({children}) {
 
     // 로그아웃 시 호출
     async function logout() {
-        await authFetch('/api/auth/logout', { method: 'POST' });
-        setIsLoggedIn(false);
+        try {
+            await authFetch('/api/auth/logout', { method: 'POST' });
+            setIsLoggedIn(false);
+        } catch (error) {
+            console.error('로그아웃 요청 실패:', error);
+            throw error;   // 호출한 쪽(Sidebar)이 실패를 알 수 있도록 다시 던짐
+        }
     }
 
     // 하위 컴포넌트에 전달할 값들을 하나로 묶음

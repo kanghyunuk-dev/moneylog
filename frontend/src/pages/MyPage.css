@@ -87,6 +87,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
     gap: 12px;
 }
 
@@ -175,10 +176,15 @@
     margin-bottom: 12px;
 }
 
-.danger-zone a {
+.danger-zone .danger-link {
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
     color: var(--error);
     font-size: 14px;
     text-decoration: none;
+    cursor: pointer;
 }
 
 /* 에러 메시지 */
@@ -193,20 +199,6 @@
     color: var(--success);
     font-size: 13px;
     margin-top: 8px;
-}
-
-/* 회원탈퇴 확인 모달 */
-.mypage .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
 }
 
 .mypage .modal-content {
