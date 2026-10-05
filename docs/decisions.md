@@ -5,44 +5,27 @@
 ## 문서 목차
 - [스택 선택](#스택-선택) — Spring Boot 4.x, JPA, Vite 등 기술 선택 이유
 - [프로젝트 범위 결정](#프로젝트-범위-결정) — 기능 포함/제외/순서 판단
-- [기술적 깊이를 남기는 방향성](#기술적-깊이를-남기는-방향성)
 - [DB 설계 판단](#db-설계-판단) — 테이블/컬럼/FK 정책, "무엇을 어떻게 설계했는가"
 - [백엔드 구현 판단](#백엔드-구현-판단) — validate vs update, 연관관계 fetch 전략 등, "설계된 걸 코드로 어떻게 다루는가"
 - [프론트엔드 구현 판단](#프론트엔드-구현-판단) — 라우트 가드, 상태 정리 책임 등, "설계된 걸 React 코드로 어떻게 다루는가"
 
 ## 스택 선택
 
-### Spring Boot 4.x (3.5.x 아님)
-백엔드 뼈대를 만들려던 시점(2026-08-07)에 확인해보니 **Spring Boot 3.5는 2026-06-30부로 OSS 지원 종료(EOL)**되어 Spring Initializr에서 더 이상 3.5.x를 선택할 수 없는 상태였음. EOL된 버전으로 새 프로젝트를 시작하는 건 보안 패치도 안 나오고 배우는 지식도 곧 구식이 되어 부적절 → Spring Boot 4.x로 진행.
-
-- **학습 방식**: Spring Boot 4.x는 Spring Security 쪽에서 이전 버전과 문법 차이가 큼(DSL 재작성, `authorizeRequests()` 완전 제거, CSRF 기본 정책 변경 등 — Spring Security 7 기반). 인증 개념(JWT, 필터 체인, 인증/인가 흐름) 학습은 개념 자체에 집중해서 정리해두고, 실제 구현 문법은 4.x 기준으로 진행.
-- 참고 자료의 문법이 실제 4.x와 다른 지점을 만나면, 이게 "개념을 잘못 이해한 것"인지 "단순 버전 문법 차이"인지 구분하는 것 자체가 하나의 학습 목표.
-
-### JPA 유지, MyBatis는 다음 기회로
-백엔드 뼈대 착수 중 "이번엔 MyBatis로 해볼까"라는 고민이 나옴. JPA는 이전에 한 번 다뤄봤지만 아직 "잘 익혔다"고 하기엔 부족한 상태, MyBatis는 수업에서 개념만 배우고 실전 적용은 없었던 상태.
-
-- **결정**: MoneyLog는 JPA로 계속 진행. MyBatis는 2차 프로젝트 또는 별도 미니 프로젝트로 미룸.
-- **이유**: React(신규), Spring Boot 4.x(예상 못한 버전 변경 대응), JWT/Security 직접 구현(신규), ③소셜로그인·④Redis(신규)까지 이미 새 학습 부담이 많음 — 여기에 MyBatis까지 더하면 학습 밀도를 넘어섬.
-- **JPA를 "잘 익히지 못했다"는 문제의 해결책은 다른 기술로 바꾸는 게 아니라, 같은 기술을 한 번 더 제대로 써보는 것**으로 판단 — 이전에 얕게 쓰고 넘어간 연관관계 매핑·집계 쿼리를 MoneyLog ②단계에서 제대로 붙잡는 것 자체가 목표.
-- MyBatis는 2차 프로젝트 또는 완전히 별도의 짧은 미니 프로젝트, 둘 다 후보로 남겨둠(미확정).
-
-### Next.js가 아니라 Vite
-MoneyLog는 (1) 로그인 뒤에만 쓰는 개인 서비스라 SEO가 불필요해 SSR 이점이 없고, (2) 백엔드(Spring Boot)가 이미 따로 있어 프론트는 API만 호출하는 순수 SPA면 충분하고, (3) 학습 목표가 "React 자체"이지 Next.js의 추가 개념(서버 컴포넌트 등)이 아님. Vite는 순수 React를 SSR 없이 빠르게 시작할 때의 표준 도구.
+- **Spring Boot 4.x(3.5.x 아님)**: 백엔드 착수 시점에 Spring Boot 3.5가 이미 OSS 지원 종료(EOL)되어 Spring Initializr에서 선택 자체가 불가능했음 — EOL 버전은 보안 패치도 안 나와 부적절하므로 4.x로 진행.
+- **JPA 유지**: MyBatis도 고민했으나, 이전에 얕게 다룬 연관관계 매핑·집계 쿼리를 이번에 제대로 다뤄보는 쪽을 선택.
+- **Next.js가 아니라 Vite**: 로그인 뒤에만 쓰는 개인 서비스라 SEO가 불필요해 SSR 이점이 없고, 백엔드가 이미 따로 있어 프론트는 API만 호출하는 순수 SPA면 충분함. 학습 목표도 Next.js의 추가 개념이 아니라 React 자체.
 
 ## 프로젝트 범위 결정
 
-- **관리자 페이지는 넣지 않음**: 가계부는 1인용 개인 데이터 도메인이라 "여러 사용자 콘텐츠 검수" 구조인 관리자 기능이 자연스럽지 않음. (2차 게시판형 프로젝트로 이관 예정 — 별도 저장소)
+- **관리자 페이지는 넣지 않음**: 가계부는 1인용 개인 데이터 도메인이라 "여러 사용자 콘텐츠 검수" 구조인 관리자 기능이 자연스럽지 않음.
 - **①(로그인)을 착수 순서 맨 앞으로 앞당김**: 인증 개념을 정리하는 것과 동시에 MoneyLog에도 바로 로그인 기능을 만들어보는 것이 이해에 더 효과적이라 판단.
 - **반복거래·다중통화 제외** (②단계 최초 범위): 반복거래는 스케줄링 로직이 추가로 필요해 학습 밀도를 넘어섬 — 안정된 후 별도 확장 기능으로 검토. 다중통화는 ⑤단계(환율 API)와 겹쳐 거기서 처리하기로 함.
 - **사용자 정의 카테고리 보류**: 고정 카테고리로 CRUD+통계 감각을 먼저 익힌 뒤 "카테고리 자체의 CRUD"를 별도 확장으로 추가할 예정. 제외가 아니라 나중 작업으로 확정.
 - **대시보드 집계는 백엔드로 확정**: 프론트/백엔드 중 어디서 처리할지가 의도적으로 남겨둔 기술적 의사결정 지점이었는데, 실무 표준(SQL GROUP BY가 원본 데이터 프론트 전송보다 효율적)과 학습 목표(JPA 집계 쿼리 작성 경험)를 근거로 백엔드 집계로 결정.
 - **②-2(목표자산)을 확장 단계로 분리**: "가계부 기록"에 그치지 않고 자산을 목표 지향적으로 관리할 수 있으면 실사용자에게 유용하다고 판단해 반영. 다만 학습 순서를 깨지 않기 위해 확장 단계로 분리.
 - **③(소셜로그인) 자동 연결 정책**: "물어보고 사용자가 선택 + 본인확인" 방식이 더 안전하지만 확인 모달·재인증 로직까지 필요해 학습 밀도를 넘어섬 — 1인 서비스라 계정 분리 리스크도 낮아 자동 연결로 단순화.
-- **①단계 토큰 저장 — localStorage로 시작 후 httpOnly+CSRF로 전환(2026-08-26 완료)**: 실무 표준은 httpOnly+CSRF(XSS에 더 안전)이지만 쿠키·CSRF·CORS까지 한번에 얹으면 로그인 실패 시 원인 구분이 어려워, JWT 흐름 자체는 먼저 localStorage로 격리해 익힘. 로그인/회원가입 실동작 검증이 끝난 시점(①단계 완주 전, 마이페이지·소프트삭제를 만들기 전)으로 전환 시점을 앞당겨 재작업을 줄임. 실제 전환 내용은 아래 "백엔드/프론트엔드 구현 판단" 참고.
-- **②단계 대시보드 통계 확장(2026-08-15)**: "전월 대비 증감률", "가장 많이 지출한 항목"은 기존 API를 살짝 확장하는 수준이라 추가 확정. 반면 **사용자별 평균 지출**은 "1인용 데이터" 전제와 충돌(전체 사용자 집계 시 동의·익명화까지 필요)하고, **최근 3개월 소비 패턴**은 "패턴"의 정의 자체가 미확정이라 범위가 흔들릴 위험이 있어 둘 다 보류(제외 아님).
-
-## 기술적 깊이를 남기는 방향성
-가계부는 흔한 주제라 그 자체로는 차별점이 약할 수 있음. 이건 주제를 바꿔서 해결할 문제가 아니라 "만들면서 기술적 깊이를 남기는가"의 문제로 판단. 단순 CRUD에 그치지 않도록 카테고리별 통계 쿼리 설계, 월별 집계를 프론트/백엔드 중 어디서 처리할지 같은 기술적 의사결정 지점을 의도적으로 만들고, 그 판단 과정을 문서로 남기는 방향으로 진행.
+- **①단계 토큰 저장 — localStorage로 시작 후 httpOnly+CSRF로 전환**: 실무 표준은 httpOnly+CSRF(XSS에 더 안전)이지만 쿠키·CSRF·CORS까지 한번에 얹으면 로그인 실패 시 원인 구분이 어려워, JWT 흐름 자체는 먼저 localStorage로 격리해 익힘. 로그인/회원가입 실동작 검증이 끝난 시점(①단계 완주 전, 마이페이지·소프트삭제를 만들기 전)으로 전환 시점을 앞당겨 재작업을 줄임. 실제 전환 내용은 아래 "백엔드/프론트엔드 구현 판단" 참고.
+- **②단계 대시보드 통계 확장**: "전월 대비 증감률", "가장 많이 지출한 항목"은 기존 API를 살짝 확장하는 수준이라 추가 확정. 반면 **사용자별 평균 지출**은 "1인용 데이터" 전제와 충돌(전체 사용자 집계 시 동의·익명화까지 필요)하고, **최근 3개월 소비 패턴**은 "패턴"의 정의 자체가 미확정이라 범위가 흔들릴 위험이 있어 둘 다 보류(제외 아님).
 
 ## DB 설계 판단
 
@@ -54,8 +37,8 @@ MoneyLog는 (1) 로그인 뒤에만 쓰는 개인 서비스라 SEO가 불필요�
 - **budget_month는 VARCHAR(7)**: "일자"는 의미가 없고 "년-월"만 필요한데 MySQL에 전용 타입이 마땅치 않아 문자열이 실무에서도 흔히 쓰임. (원래 컬럼명은 `year_month`였으나 MySQL 예약어 충돌로 변경 — `docs/troubleshooting.md` 참고)
 - **Category는 Java enum이 아니라 테이블로 설계**: 나중에 사용자 정의 카테고리를 붙일 때 이 테이블에 사용자 소유 행을 추가하는 구조로 자연스럽게 확장 가능하기 때문.
 - **RefreshToken을 email이 아닌 user_id(FK)로 연결**: email 문자열로 느슨하게 연결하는 방식(탈퇴 시 스케줄러 정리가 편함)도 검토했으나, DB가 정합성을 보장 못 해 존재하지 않는 이메일을 가리키는 고아 토큰이 생길 수 있음 — `user_id` FK + `ON DELETE CASCADE`로 삭제 편의성과 정합성을 모두 확보.
-- **Transaction에 updated_at 추가(2026-09-02)**: created_at만으로는 사용자가 나중에 수정한 거래인지 구분이 안 됨. `PUT /api/transactions/{id}`로 직접 수정 가능한 데이터라 수정 이력 추적 대상(User와 동일) — 반면 수정 자체가 없는 고정 시드 데이터 Category는 제외.
-- **transaction_date는 DATE(LocalDate), DATETIME 아님(2026-09-02)**: 거래는 "몇 시"가 아니라 "어느 날짜"만 중요함(가계부 집계가 전부 일/월 단위). 시각까지 저장하면 타임존 변환 과정에서 자정 근처 거래가 하루 밀리는 버그 위험만 생김 — 서버가 기록하는 `created_at`(시각까지 의미)과 사용자가 입력하는 `transaction_date`(날짜만 의미)를 타입부터 구분.
+- **Transaction에 updated_at 추가**: created_at만으로는 사용자가 나중에 수정한 거래인지 구분이 안 됨. `PUT /api/transactions/{id}`로 직접 수정 가능한 데이터라 수정 이력 추적 대상(User와 동일) — 반면 수정 자체가 없는 고정 시드 데이터 Category는 제외.
+- **transaction_date는 DATE(LocalDate), DATETIME 아님**: 거래는 "몇 시"가 아니라 "어느 날짜"만 중요함(가계부 집계가 전부 일/월 단위). 시각까지 저장하면 타임존 변환 과정에서 자정 근처 거래가 하루 밀리는 버그 위험만 생김 — 서버가 기록하는 `created_at`(시각까지 의미)과 사용자가 입력하는 `transaction_date`(날짜만 의미)를 타입부터 구분.
 
 ### FK 정책 (`ON DELETE`/`ON UPDATE`)
 - **User 참조(RefreshToken, Transaction, Budget, Goal 전체)**: `ON DELETE CASCADE, ON UPDATE CASCADE`. 판단 기준: "부모(User)가 없어지면 자식 데이터가 존재할 이유가 있는가?" — 회원탈퇴는 이 사람의 모든 흔적을 지운다는 의미가 명확하므로, User 삭제(30일 뒤 하드 삭제) 시 연관 데이터도 자동으로 같이 지워지는 게 자연스러움.
@@ -67,77 +50,77 @@ MoneyLog는 (1) 로그인 뒤에만 쓰는 개인 서비스라 SEO가 불필요�
 
 DB 설계(위 섹션)가 정해진 뒤, 그걸 JPA 코드로 어떻게 다룰지에 대한 판단. `backend/CLAUDE.md`의 각 규칙이 왜 그런지는 여기 참고.
 
-- **FK 정책 재검증(2026-08-14)**: category가 CASCADE였다면 카테고리 1개("식비") 삭제라는 사소한 작업이 전체 사용자의 거래·예산을 연쇄 삭제하는 사고로 이어짐 — "행위 크기"와 "결과 크기"가 안 맞는 게 CASCADE의 위험. 지금은 카테고리 삭제 API 자체가 없어 이 경로가 당장 트리거되진 않지만, RESTRICT는 향후 관리 기능·DB 직접 조작까지 포함한 방어선. users CASCADE는 반대로 검증 — RESTRICT면 탈퇴 시 자식 데이터를 애플리케이션이 먼저 다 지워야 해서 절차만 복잡해짐.
+- **FK 정책 재검증**: category가 CASCADE였다면 카테고리 1개("식비") 삭제라는 사소한 작업이 전체 사용자의 거래·예산을 연쇄 삭제하는 사고로 이어짐 — "행위 크기"와 "결과 크기"가 안 맞는 게 CASCADE의 위험. 지금은 카테고리 삭제 API 자체가 없어 이 경로가 당장 트리거되진 않지만, RESTRICT는 향후 관리 기능·DB 직접 조작까지 포함한 방어선. users CASCADE는 반대로 검증 — RESTRICT면 탈퇴 시 자식 데이터를 애플리케이션이 먼저 다 지워야 해서 절차만 복잡해짐.
 - **`ddl-auto=validate`(update 아님)**: update는 위험한 변경(컬럼 삭제 등)을 조용히 스킵해 Entity-DB가 소리 없이 어긋날 수 있음. validate는 어긋나면 즉시 에러로 알려줘 FK 정책이 실제로 반영됐는지 신뢰할 수 있음 — 스키마 설계 검증 자체가 학습 목표라 이 신뢰가 필요함.
 - **Category 사용자 정의 확장(나중 작업)은 같은 테이블에 `user_id` 컬럼 추가하는 안이 유력**: 별도 테이블로 나누면 `transaction.category_id`가 어느 테이블을 가리키는지 모호해짐. 조회 쿼리가 항상 소유자 조건을 강제하도록 Repository를 설계해야 다른 사용자의 개인 카테고리 노출을 막을 수 있음 — 실제 구현 시점에 재검토.
 - **연관관계는 모두 `FetchType.LAZY` 명시**: `@ManyToOne`/`@OneToOne`은 기본값이 EAGER라 N+1 문제가 생길 수 있음. `@OneToMany`/`@ManyToMany`는 기본이 LAZY지만 일관성을 위해 명시. 필요한 곳만 JPQL `fetch join`으로 명시적 즉시 조회.
 - **탈퇴 여부 확인은 매 요청 DB 재조회 — 최선이 아니라 ①단계용 단순화**: 실무에서는 Redis 블랙리스트(탈퇴 시 즉시 캐시에 기록), 세션 버전 패턴(이벤트마다 버전 증가, 토큰의 버전과 비교), 짧은 토큰 만료 중 하나가 더 흔하지만, 지금은 JWT 무상태성 트레이드오프(`docs/troubleshooting.md`)를 단순하게 체감하는 게 목표라 DB 재조회로 시작 — ④단계(Redis)에서 이 중 하나를 선택해 최적화 예정.
 - **DTO는 Lombok 대신 Java `record` 사용**: 언어 표준 기능이라 Lombok 없이 불변 생성자·getter가 보장됨. Entity는 모든 필드가 강제 final이라 JPA 스펙상 record 사용 불가 — Entity는 계속 Lombok.
 - **DTO는 `dto/request`/`dto/response`로 폴더 분리**: 한 클래스가 요청·응답을 겸하면 Mass Assignment 위험(요청에 `role`/`id` 등 임의 필드 주입)과 응답 시 내부 정보 노출 위험이 생김.
-- **에러 응답에 `errorCode` 필드 추가(2026-08-28)**: 같은 401 안에 "토큰 문제"(재발급하면 해결)와 "도메인 검증 실패"(재발급해도 안 풀림)가 섞여 `authFetch`가 불필요한 재발급을 시도하던 문제 — 401을 403으로 바꾸는 대신 `ErrorResponse`에 `errorCode`(예: `TOKEN_INVALID`)를 추가해 세분화. 겪은 문제와 원인은 `docs/troubleshooting.md` 참고.
+- **에러 응답에 `errorCode` 필드 추가**: 같은 401 안에 "토큰 문제"(재발급하면 해결)와 "도메인 검증 실패"(재발급해도 안 풀림)가 섞여 `authFetch`가 불필요한 재발급을 시도하던 문제 — 401을 403으로 바꾸는 대신 `ErrorResponse`에 `errorCode`(예: `TOKEN_INVALID`)를 추가해 세분화. 겪은 문제와 원인은 `docs/troubleshooting.md` 참고.
 - **일반 가입자도 `users.provider`에 `"LOCAL"`을 명시(NULL 아님)**: `NULL`은 "값 없음/불명"을 뜻해 "일반 가입자임이 확실함"이라는 의도를 표현 못 함. 쿼리도 `WHERE provider IN ('LOCAL','GOOGLE')`이 `NULL` 비교(`= NULL`이 항상 거짓)보다 단순 — OAuth 스키마 설계 실무 컨센서스.
 - **예외는 커스텀 클래스 + `GlobalExceptionHandler` 일괄 처리, 표준 예외 즉석 사용 금지**: `IllegalArgumentException`처럼 의미가 모호한 예외를 바로 던지면 못 잡을 시 500으로 뭉개져 사용자 잘못인지 서버 오류인지 구분이 안 됨 — 도메인 의미가 담긴 예외를 던지고 한 곳에서 상태 코드+메시지로 변환해 일관성 확보. `CustomAuthenticationEntryPoint`(401)/`CustomAccessDeniedHandler`(403)도 같은 원리(`docs/troubleshooting.md` 참고).
 - **패키지 구조는 계층별(Package by Layer) 유지, 기능별은 채택 안 함**: 기능별은 여러 사람이 각자 다른 도메인을 동시에 건드리는 팀/대규모 서비스에 적합 — MoneyLog는 1인 프로젝트에 도메인도 6개뿐이라 이점이 없고, 계층별 구조가 Controller-Service-Repository 개념을 배우는 학습 목적에 더 명확함. `security`처럼 특정 도메인에 안 속하는 관심사는 별도 폴더로 분리.
-- **RefreshToken은 JWT 자체 만료 검증 + DB `expires_at` 재검증을 함께 함(2026-08-22)**: `validateToken()`(서명·형식 검증)만으로는 DB에 저장된 토큰이 실제로 유효한지 확인할 수 없음 — `refresh()`에서 `expiresAt`을 DB와 재비교해, 나중에 특정 토큰을 즉시 무효화하는 관리 기능(강제 로그아웃 등)을 만들 여지도 남김.
-- **httpOnly+CSRF 전환 시 CSRF 설정은 `CsrfConfigurer::spa()` 채택, 구버전 수동 설정은 안 씀(2026-08-23)**: 예전엔 `CookieCsrfTokenRepository`+커스텀 `CsrfTokenRequestHandler`까지 손으로 설정해야 했는데, Spring Security 7.0(Spring Boot 4.0과 짝)이 이 조합을 `http.csrf(CsrfConfigurer::spa)` 한 줄로 표준화. 결과물(쿠키/헤더 이름, httpOnly 여부)은 구버전과 동일해 프론트 코드엔 영향 없음.
-- **닉네임 길이는 2자 이상 10자 이하로 제한(2026-08-28)**: 긴 닉네임 입력 시 UI가 깨지는 걸 확인, 네이버·카카오 등 한글 서비스의 일반적인 제한(대략 2~10자)을 참고해 `@Size(min=2, max=10)`으로 결정.
-- **`UserService`가 Spring Security의 `UsernameNotFoundException`을 오용하던 것을 자체 `UserNotFoundException`으로 교체(2026-08-28)**: 이 클래스는 Spring Security 인증 예외 체계에 속해 `GlobalExceptionHandler`를 못 타고 `CustomAuthenticationEntryPoint`로 새어 엉뚱한 401 메시지가 나감 — "예외는 도메인 커스텀 클래스만" 원칙이 프레임워크 예외 재사용에도 그대로 적용됨을 보여준 사례.
-- **쿠키 생성 로직을 `CookieUtils`로 공통화(2026-08-29)**: `AuthController`의 `buildCookie`와 동일한 코드가 `UserController.withdraw()`에도 필요해지며 중복 발생 — 쿠키 옵션이 흩어지면 배포 시 `secure(false)→true` 전환을 한 곳만 놓칠 위험이 있어 `security/CookieUtils`로 추출.
-- **탈퇴 회원 이메일 재사용은 30일 유예 기간 동안 차단(2026-08-30)**: 즉시 허용하려면 `users.email` UNIQUE 제약을 부분 유니크로 바꿔야 해 변경 폭이 커짐 — 기존 유예 기간 설계와 맞물리는 "차단"으로 확정. `register()` 로직은 그대로 두고 에러 메시지만 "이미 가입된 이메일입니다" → "사용할 수 없는 이메일입니다"로 정정(탈퇴 계정에 "가입되어 있다"는 표현이 부정확했음).
-- **`UserCleanupScheduler`를 `service`가 아닌 별도 `scheduler` 패키지로 분리(2026-08-29)**: "특정 도메인에 안 속하는 횡단 관심사는 별도 폴더로 분리"라는 패키지 구조 원칙을 스케줄러에도 적용 — 비즈니스 로직 제공자(`@Service`)가 아니라 주기적으로 실행되는 작업 단위(`@Component`)라는 점에서 성격이 다름.
-- **`AuthService.refresh()`에도 탈퇴 여부 체크 추가(2026-08-29)**: 로그인 시점과 매 요청 인가에서만 확인하던 탈퇴 여부를, RefreshToken 유효기간만 보던 `refresh()`에도 추가 — 탈퇴 계정이 새 AccessToken을 계속 발급받을 수 있는 경로를 막음(Auth0/Cognito 등도 계정 비활성화 시 즉시 토큰 revoke가 표준).
-- **거래 조회 N+1은 `fetch join`으로 해결, `@EntityGraph`는 보류(2026-09-08)**: `findByUserAndTransactionDateBetween...`에 `JOIN FETCH t.category` 추가. 지금은 페이징이 없어 `@Query`로 충분 — 페이징 도입 시 `fetch join`은 카운트 쿼리를 따로 관리해야 하는 문제가 있어, 그때 파생 메서드에 붙이기만 하면 되는 `@EntityGraph`로 재검토.
-- **`Budget` 등록/수정 요청 DTO는 분리(`BudgetCreateRequest`/`BudgetUpdateRequest`), `Transaction`은 계속 공유(2026-09-09)**: `TransactionRequest`는 등록·수정에 필요한 필드가 완전히 같아 공유해도 검증 규칙이 안 어긋남. `Budget`은 수정이 금액만 바꾸는데(`Budget.update(Long amount)`) 등록은 카테고리·월·금액이 다 필요해, 하나의 DTO로 공유하면 수정 시 불필요한 필드까지 `@NotNull`로 요구하거나 등록 시 검증이 약해지는 문제가 생김 — "등록/수정 필드가 같으면 공유, 다르면 분리"가 기준.
-- **저축률은 -100~100%로 클램핑(2026-09-14)**: `순액÷수입×100` 공식은 수입이 지출보다 훨씬 작을 때(예: 이번 달 수입 5만원, 지출 56만원) `-1020%` 같은 의미 없는 극단값을 만듦 — 적자라는 사실 자체는 음수로 계속 보여주되(정직한 신호), 그 크기가 더 이상 정보를 안 주는 지점(±100%)에서 잘라 화면이 깨져 보이지 않게 함.
-- **차트는 Recharts 사용(2026-09-14)**: Chart.js는 대량 데이터용 Canvas 기반이라 지금 규모(6개월·카테고리 15개 이하)엔 과하고 `react-chartjs-2` 래퍼도 필요. Nivo는 차트 종류가 다양하지만 파이+막대만 필요한 지금엔 과한 스펙. Recharts는 React 전용이라 래퍼 없이 JSX로 바로 조립되어 채택.
-- **목표자산 진행률은 스케줄러 배치 대신 조회 시점마다 실시간 재계산(2026-09-16)**: 즉각적 피드백이 지연 피드백보다 행동 변화에 효과적이라 전면 전환(`GoalReflectionScheduler` 삭제, `getGoals()` 호출마다 `refreshProgress`로 재계산). 계산 범위는 `activatedAt`(대기 상태를 거쳐 활성화된 시점)부터 오늘까지 순저축액(수입-지출)으로 매번 덮어쓰기 — 적자 달도 그대로 반영해 진행률이 후퇴할 수 있음.
-- **카테고리 아이콘은 수정 API 없이 고정값(2026-09-17)**: 카테고리가 전역 공유 자원이라 수정 API를 두면 한 사용자의 변경이 전체 사용자에게 반영됨 — `category.icon` 컬럼에 고정 이모지만 시딩.
-- **홈 화면은 전용 API 없이 기존 API 4개(내정보/요약/거래목록/목표목록) 조합(2026-09-17)**: 홈 화면에 필요한 데이터가 전부 다른 화면에서 이미 쓰던 응답과 동일해 새 집계 로직이 없음 — `Promise.all`로 병렬 호출 후 프론트에서 조합(최근 거래는 날짜 내림차순 5건 슬라이스, 목표는 `ACTIVE` 필터).
-- **OAuth2 state는 세션 대신 쿠키에 저장, STATELESS 유지(2026-09-19)**: OAuth2 Authorization Code Flow는 기본적으로 HTTP 세션에 인가 요청(state 포함)을 저장하는데, 이 프로젝트는 처음부터 세션을 안 쓰는 완전 무상태 구조라 그대로 두면 충돌함. 세션 정책을 완화하는 대신 `CookieOAuth2AuthorizationRequestRepository`를 직접 구현해 세션 대신 임시 쿠키에 저장 — 실무에서도 JWT+무상태 아키텍처에서는 이 방식이 표준(참고: `HttpCookieOAuth2AuthorizationRequestRepository` 패턴).
-- **OAuth2 state 쿠키는 Java 직렬화 대신 Jackson JSON 직렬화(2026-09-20)**: `OAuth2AuthorizationRequest`를 Java 표준 직렬화(`ObjectOutputStream`)로 그대로 쿠키에 저장하면, 쿠키가 클라이언트가 조작 가능한 값이라 안전하지 않은 역직렬화(실제 CVE-2023-47174 사례 있음)로 이어짐 — 필요한 필드만 뽑은 `OAuth2AuthorizationRequestSnapshot` record를 Jackson으로 JSON 직렬화해 타입 주입 여지를 없앰.
-- **OAuth2 state 쿠키는 SameSite=Lax, 다른 쿠키는 Strict 유지(2026-09-20)**: 구글에서 우리 서버로 돌아오는 콜백은 브라우저 입장에서 교차 사이트 리다이렉트라, `SameSite=Strict` 쿠키는 이 요청에 실리지 않아 `authorization_request_not_found` 에러로 로그인이 깨짐(실제 재현). `CookieUtils.build()`에 `sameSite` 오버로드를 추가해 OAuth2 쿠키만 `Lax`로 지정.
-- **계정 자동 연결 시 provider 값은 절대 덮어쓰지 않음(2026-09-19)**: 같은 이메일로 가입 경로(LOCAL/GOOGLE)와 무관하게 항상 같은 계정으로 귀결시키기로 했지만(`docs/specs.md` 참고), 로그인할 때마다 `provider`를 마지막 로그인 수단으로 갱신하면 "구글 가입자만 일반 회원가입 차단", "구글 가입자는 비밀번호 확인 없이 탈퇴" 같은 기존 분기 로직이 꼬임 — `provider`는 최초 가입 경로를 나타내는 불변값으로 고정.
-- **구글 로그인은 `email_verified` 클레임 확인 필수(2026-09-19)**: 구글이 응답하는 이메일이 항상 검증된 값은 아님(제3자 도메인 이메일을 구글 계정에 연결한 경우 등) — 검증 안 된 이메일로 자동 연결을 허용하면 계정 탈취 경로가 됨. `email_verified`가 false/null이면 로그인 자체를 거부.
-- **소셜 사용자는 탈퇴 시 비밀번호 확인 생략(2026-09-19)**: 소셜 가입자는 `password`가 NULL이라 애초에 확인할 비밀번호가 없음. 재인증(구글 재로그인 요구)이 더 안전하지만 별도 플로우 구현이 필요해 과함 — 이미 소프트 삭제(30일 유예)로 되돌릴 수 있어 즉시 확정되는 위험이 낮다는 점을 근거로 확인 없이 탈퇴 허용.
-- **회원가입 시 중복 이메일 메시지는 provider별로 분기, 탈퇴 계정은 뭉뚱그림(2026-09-20)**: 이미 구글로 가입된 이메일로 일반 회원가입을 시도하면 "Google로 가입된 이메일 입니다. Google 로그인을 이용해주세요"로 구체적으로 안내(Firebase/Google 공식 문서가 권장하는 패턴, 1인 프로젝트라 계정 존재 노출 리스크도 낮음). 단 탈퇴한 계정은 살아있는 계정과 구분해서 알려줄 실익이 없어 기존 "사용할 수 없는 이메일 입니다"로 그대로 유지 — 탈퇴 사실 자체를 외부에 노출하지 않음.
-- **Redis는 RefreshToken 저장이 아니라 AccessToken 블랙리스트+탈퇴 여부 캐싱 용도로만 도입(2026-09-23)**: RefreshToken을 Redis로 옮기면 조회 속도는 빨라지지만, Redis는 기본적으로 휘발성이라 재시작 시 전체 로그아웃되는 리스크가 새로 생김 — 사용자당 RefreshToken 1개뿐인 지금 규모엔 이 리스크가 이득보다 큼. 반면 "로그아웃해도 AccessToken이 만료 전까지 계속 유효한 문제"와 "매 요청마다 탈퇴 여부 DB 재조회"는 실제로 겪고 있는 문제라 이 두 가지만 Redis로 최적화.
-- **Redis 캐시 값은 User 엔티티 전체가 아니라 `UserAuthCache`(userId+deleted만 담은 record)로 제한(2026-09-23)**: JPA 엔티티를 그대로 캐싱하면 역직렬화 시 detached 상태가 되어 지연 로딩 예외나 더티체킹 무력화 위험이 있음(과거 실제로 겪은 버그 패턴) — `PrincipalDetails`에 담기는 `User`는 캐시와 무관하게 항상 DB에서 새로 조회, 캐시는 "탈퇴 여부 즉시 확인"이라는 좁은 목적에만 사용.
-- **Redis 값 직렬화는 `GenericJacksonJsonRedisSerializer`(Jackson 3용) + `PolymorphicTypeValidator`로 패키지 화이트리스트 적용(2026-09-23)**: 흔히 쓰이는 `GenericJackson2JsonRedisSerializer`는 Jackson 2 전용이며 Spring Data Redis 4.0부터 deprecated. 게다가 검증기 없이 기본적으로 무제한 다형성 역직렬화를 허용해 안전하지 않은 역직렬화 위험이 있음 — Jackson 3용 후속 클래스로 교체하고 `com.moneylog.backend.security` 패키지만 역직렬화 허용하도록 제한.
-- **블랙리스트 Redis 키는 AccessToken 원문 대신 SHA-256 해시(2026-09-23)**: 토큰 원문을 키로 쓰면 만료 전까지 최대 30분간 유효한 토큰이 Redis 키 목록(`KEYS`, 모니터링 도구 등)에 평문 노출됨 — 키 목적(존재 여부 확인)엔 단방향 해시로도 충분해 원문 노출 없이 동일하게 동작.
-- **탈퇴 시 캐시 삭제는 `TransactionSynchronizationManager.afterCommit()`으로 트랜잭션 커밋 이후에 실행(2026-09-23)**: `@Transactional` 메서드 안에서 캐시를 즉시 지우면, DB 커밋 전(아직 탈퇴가 실제 반영 안 된 상태)에 다른 요청이 캐시를 "탈퇴 안 함"으로 다시 채울 수 있는 경합 상태가 생김 — 캐시 삭제를 커밋 이후로 미뤄 이 틈을 없앰.
-- **Redis 호출 실패는 예외를 삼키고 폴백(fail-open)해 Redis를 필수가 아닌 보조 의존성으로 유지(2026-09-24)**: 블랙리스트·탈퇴 캐시는 원본 데이터가 아니라 최적화 계층인데, 예외를 그대로 두면 Redis 장애가 로그인과 인증이 필요한 모든 요청의 실패로 번짐(필터 단계 예외는 `GlobalExceptionHandler`도 못 잡음) — 블랙리스트 확인 실패는 통과, 캐시 조회 실패는 DB 조회로 대체. 트레이드오프: Redis 장애 중 로그아웃한 토큰이 잔여 만료시간(최대 30분)만큼 유효할 수 있으나 인증 전체가 멈추는 것보다 감수할 만하다고 판단(탈퇴 캐시 삭제 실패는 이후 DB의 `deletedAt` 재확인으로 걸러져 영향 없음).
-- **Redis 타임아웃은 기본값 대신 명령 250ms/연결 100ms로 단축(2026-09-24)**: Lettuce는 연결이 끊겨도 명령을 대기열에 쌓아뒀다가 타임아웃에서야 실패시키므로, 폴백이 있어도 타임아웃이 길면 장애 중 모든 요청이 (요청당 Redis 호출 횟수 × 타임아웃)만큼 멈춤(1초로 두었을 때 요청당 약 2초를 실제로 확인). 캐시는 DB 조회보다 오래 기다릴 이유가 없어 AWS ElastiCache 공식 권장값(단일 키 명령 250ms, 연결은 명령보다 짧게 100ms)을 따름. 장애 중 즉시 실패시키는 `REJECT_COMMANDS`와 재연결 백오프 조정은 이 규모엔 과해서 도입하지 않음(배포 후 필요해지면 추가).
-- **Docker Compose 배포는 프론트+백엔드를 같은 도메인(Nginx 리버스 프록시)으로 구성(2026-09-27)**: 브라우저 입장에서 모든 요청이 같은 origin이 되어 CORS 문제 자체가 없어짐 — 실무 표준 패턴. MySQL/Redis/백엔드는 포트를 호스트에 노출하지 않고 컴포즈 내부 네트워크로만 통신, 외부엔 Nginx만 노출 — 계획했던 "Redis 포트 127.0.0.1 바인딩"이 이 구조로 대체되어 불필요해짐.
-- **MySQL은 root와 별도로 애플리케이션 전용 계정을 만들어 사용(2026-09-27)**: root로 접속하면 SQL 인젝션 등 취약점 발생 시 피해 범위가 DB 전체로 커짐 — root는 초기화·관리 용도로만 남기고 백엔드는 `moneylog` 권한만 있는 별도 계정으로 접속.
-- **초기화 스크립트 한글 깨짐은 `LANG=C.UTF-8`로 해결, `--skip-character-set-client-handshake`는 채택 안 함(2026-09-27)**: 원인이 서버 설정이 아니라 초기화 스크립트를 읽는 mysql 클라이언트의 컨테이너 로케일이라 `LANG` 설정이 정확한 해법 — `--skip-character-set-client-handshake`(서버가 클라이언트 요청을 무시)는 근본 원인은 안 고치고 증상만 가리는 우회이자 향후 deprecated 예정이라 배제. 겪은 증상은 `docs/troubleshooting.md` 참고.
-- **`CookieUtils`를 정적 유틸에서 `@Component`로 전환(2026-09-27)**: `secure` 속성이 배포 환경마다 달라지는 설정값이 되며 `AppProperties` 의존성이 생김 — 의존성이 필요해진 유틸은 정적 메서드가 아니라 빈으로 바꾸는 게 표준.
-- **`spring.jpa.show-sql`은 환경변수 대신 Spring Profile(`local`/`prod`)로 분리(2026-09-28)**: 배포 위치가 아니라 "로깅 레벨" 성격의 정적 설정이라, 실무에서도 이런 값은 환경변수보다 프로필별 properties 파일로 관리하는 게 정석 — `application-local.properties`(켬)/`application-prod.properties`(끔), `docker-compose.yml`은 `SPRING_PROFILES_ACTIVE=prod`만 지정.
-- **CI/CD는 GitHub Actions, CI/CD 워크플로우 파일도 분리(2026-09-28)**: 1인 프로젝트에 Jenkins는 별도 서버 유지보수 부담이 커서 배제. `ci.yml`(develop+main 대상)과 `deploy.yml`(main만 대상)을 나눠, develop에 push해도 배포 워크플로우 자체가 반응하지 않게 함 — 조건문 분기보다 파일 분리가 안전.
-- **Nginx에 Let's Encrypt challenge 경로를 미리 준비(2026-09-28)**: `/.well-known/acme-challenge/`가 SPA 폴백에 걸리면 인증서 발급이 실패함 — `certbot_www` 볼륨을 nginx에 미리 마운트해, 도메인이 생긴 뒤 certbot 연동만 추가하면 되게 함.
-- **Amazon Linux 2023은 compose/buildx 플러그인을 수동 설치(2026-09-30)**: `dnf install docker`로 설치되는 패키지엔 엔진만 있고 compose/buildx 플러그인이 빠져있음(AWS 공식 이슈로 등록된 알려진 결함) — Docker 공식 GitHub 릴리즈에서 바이너리를 직접 받아 `~/.docker/cli-plugins/`에 설치. Docker 공식 저장소를 추가하는 대안도 있으나 추가 설정이 더 필요해 배제.
-- **certbot은 호스트 설치 대신 컨테이너(1회성)로 실행(2026-09-30)**: `docker-compose.yml`이 이미 named volume(`certbot_www`) 기반으로 설계돼 있었고, Docker Compose 환경에서 공식적으로 더 널리 문서화된 패턴이라 일관성 차원에서 채택. 호스트 설치(valuepick 방식)도 유효한 대안이지만 기존 설계와 더 맞는 쪽을 선택.
-- **GitHub Actions CD의 SSH 접속을 위해 보안그룹 22번을 0.0.0.0/0으로 개방(2026-10-03)**: GitHub Actions 러너는 고정 IP가 아니라 매번 접속 IP가 바뀌어 "내 IP" 제한으로는 CD 자체가 불가능(`i/o timeout`으로 실제 실패 확인). 개인키 인증만으로 사실상 안전하다고 판단해 채택 — 더 안전한 "배포 시점에만 동적으로 IP 허용" 방식은 설정 복잡도 대비 지금 규모엔 과해 백로그로 남김.
-- **GitHub 브랜치 보호는 "Lock branch" 대신 "Require pull request + Require status checks"로 구성(2026-10-03)**: Lock branch는 PR을 통한 머지까지 전면 차단하는 "동결" 기능이라 실제 운영되는 `main`엔 안 맞음(PR 머지가 막히는 문제로 실제 확인). "승인 필요" 조건도 제외 — 1인 프로젝트라 승인해줄 사람이 없어 영구 차단 위험.
-- **Docker 로그 드라이버에 `max-size`/`max-file` 명시(2026-10-03)**: 기본 `json-file` 드라이버는 로그 파일 크기 제한이 없어 장기 운영 시 디스크 고갈 위험 — 실무 표준값(`10m`/`3`)으로 전체 컨테이너에 적용.
+- **RefreshToken은 JWT 자체 만료 검증 + DB `expires_at` 재검증을 함께 함**: `validateToken()`(서명·형식 검증)만으로는 DB에 저장된 토큰이 실제로 유효한지 확인할 수 없음 — `refresh()`에서 `expiresAt`을 DB와 재비교해, 나중에 특정 토큰을 즉시 무효화하는 관리 기능(강제 로그아웃 등)을 만들 여지도 남김.
+- **httpOnly+CSRF 전환 시 CSRF 설정은 `CsrfConfigurer::spa()` 채택, 구버전 수동 설정은 안 씀**: 예전엔 `CookieCsrfTokenRepository`+커스텀 `CsrfTokenRequestHandler`까지 손으로 설정해야 했는데, Spring Security 7.0(Spring Boot 4.0과 짝)이 이 조합을 `http.csrf(CsrfConfigurer::spa)` 한 줄로 표준화. 결과물(쿠키/헤더 이름, httpOnly 여부)은 구버전과 동일해 프론트 코드엔 영향 없음.
+- **닉네임 길이는 2자 이상 10자 이하로 제한**: 긴 닉네임 입력 시 UI가 깨지는 걸 확인, 네이버·카카오 등 한글 서비스의 일반적인 제한(대략 2~10자)을 참고해 `@Size(min=2, max=10)`으로 결정.
+- **`UserService`가 Spring Security의 `UsernameNotFoundException`을 오용하던 것을 자체 `UserNotFoundException`으로 교체**: 이 클래스는 Spring Security 인증 예외 체계에 속해 `GlobalExceptionHandler`를 못 타고 `CustomAuthenticationEntryPoint`로 새어 엉뚱한 401 메시지가 나감 — "예외는 도메인 커스텀 클래스만" 원칙이 프레임워크 예외 재사용에도 그대로 적용됨을 보여준 사례.
+- **쿠키 생성 로직을 `CookieUtils`로 공통화**: `AuthController`의 `buildCookie`와 동일한 코드가 `UserController.withdraw()`에도 필요해지며 중복 발생 — 쿠키 옵션이 흩어지면 배포 시 `secure(false)→true` 전환을 한 곳만 놓칠 위험이 있어 `security/CookieUtils`로 추출.
+- **탈퇴 회원 이메일 재사용은 30일 유예 기간 동안 차단**: 즉시 허용하려면 `users.email` UNIQUE 제약을 부분 유니크로 바꿔야 해 변경 폭이 커짐 — 기존 유예 기간 설계와 맞물리는 "차단"으로 확정. `register()` 로직은 그대로 두고 에러 메시지만 "이미 가입된 이메일입니다" → "사용할 수 없는 이메일입니다"로 정정(탈퇴 계정에 "가입되어 있다"는 표현이 부정확했음).
+- **`UserCleanupScheduler`를 `service`가 아닌 별도 `scheduler` 패키지로 분리**: "특정 도메인에 안 속하는 횡단 관심사는 별도 폴더로 분리"라는 패키지 구조 원칙을 스케줄러에도 적용 — 비즈니스 로직 제공자(`@Service`)가 아니라 주기적으로 실행되는 작업 단위(`@Component`)라는 점에서 성격이 다름.
+- **`AuthService.refresh()`에도 탈퇴 여부 체크 추가**: 로그인 시점과 매 요청 인가에서만 확인하던 탈퇴 여부를, RefreshToken 유효기간만 보던 `refresh()`에도 추가 — 탈퇴 계정이 새 AccessToken을 계속 발급받을 수 있는 경로를 막음(Auth0/Cognito 등도 계정 비활성화 시 즉시 토큰 revoke가 표준).
+- **거래 조회 N+1은 `fetch join`으로 해결, `@EntityGraph`는 보류**: `findByUserAndTransactionDateBetween...`에 `JOIN FETCH t.category` 추가. 지금은 페이징이 없어 `@Query`로 충분 — 페이징 도입 시 `fetch join`은 카운트 쿼리를 따로 관리해야 하는 문제가 있어, 그때 파생 메서드에 붙이기만 하면 되는 `@EntityGraph`로 재검토.
+- **`Budget` 등록/수정 요청 DTO는 분리(`BudgetCreateRequest`/`BudgetUpdateRequest`), `Transaction`은 계속 공유**: `TransactionRequest`는 등록·수정에 필요한 필드가 완전히 같아 공유해도 검증 규칙이 안 어긋남. `Budget`은 수정이 금액만 바꾸는데(`Budget.update(Long amount)`) 등록은 카테고리·월·금액이 다 필요해, 하나의 DTO로 공유하면 수정 시 불필요한 필드까지 `@NotNull`로 요구하거나 등록 시 검증이 약해지는 문제가 생김 — "등록/수정 필드가 같으면 공유, 다르면 분리"가 기준.
+- **저축률은 -100~100%로 클램핑**: `순액÷수입×100` 공식은 수입이 지출보다 훨씬 작을 때(예: 이번 달 수입 5만원, 지출 56만원) `-1020%` 같은 의미 없는 극단값을 만듦 — 적자라는 사실 자체는 음수로 계속 보여주되(정직한 신호), 그 크기가 더 이상 정보를 안 주는 지점(±100%)에서 잘라 화면이 깨져 보이지 않게 함.
+- **차트는 Recharts 사용**: Chart.js는 대량 데이터용 Canvas 기반이라 지금 규모(6개월·카테고리 15개 이하)엔 과하고 `react-chartjs-2` 래퍼도 필요. Nivo는 차트 종류가 다양하지만 파이+막대만 필요한 지금엔 과한 스펙. Recharts는 React 전용이라 래퍼 없이 JSX로 바로 조립되어 채택.
+- **목표자산 진행률은 스케줄러 배치 대신 조회 시점마다 실시간 재계산**: 즉각적 피드백이 지연 피드백보다 행동 변화에 효과적이라 전면 전환(`GoalReflectionScheduler` 삭제, `getGoals()` 호출마다 `refreshProgress`로 재계산). 계산 범위는 `activatedAt`(대기 상태를 거쳐 활성화된 시점)부터 오늘까지 순저축액(수입-지출)으로 매번 덮어쓰기 — 적자 달도 그대로 반영해 진행률이 후퇴할 수 있음.
+- **카테고리 아이콘은 수정 API 없이 고정값**: 카테고리가 전역 공유 자원이라 수정 API를 두면 한 사용자의 변경이 전체 사용자에게 반영됨 — `category.icon` 컬럼에 고정 이모지만 시딩.
+- **홈 화면은 전용 API 없이 기존 API 4개(내정보/요약/거래목록/목표목록) 조합**: 홈 화면에 필요한 데이터가 전부 다른 화면에서 이미 쓰던 응답과 동일해 새 집계 로직이 없음 — `Promise.all`로 병렬 호출 후 프론트에서 조합(최근 거래는 날짜 내림차순 5건 슬라이스, 목표는 `ACTIVE` 필터).
+- **OAuth2 state는 세션 대신 쿠키에 저장, STATELESS 유지**: OAuth2 Authorization Code Flow는 기본적으로 HTTP 세션에 인가 요청(state 포함)을 저장하는데, 이 프로젝트는 처음부터 세션을 안 쓰는 완전 무상태 구조라 그대로 두면 충돌함. 세션 정책을 완화하는 대신 `CookieOAuth2AuthorizationRequestRepository`를 직접 구현해 세션 대신 임시 쿠키에 저장 — 실무에서도 JWT+무상태 아키텍처에서는 이 방식이 표준(참고: `HttpCookieOAuth2AuthorizationRequestRepository` 패턴).
+- **OAuth2 state 쿠키는 Java 직렬화 대신 Jackson JSON 직렬화**: `OAuth2AuthorizationRequest`를 Java 표준 직렬화(`ObjectOutputStream`)로 그대로 쿠키에 저장하면, 쿠키가 클라이언트가 조작 가능한 값이라 안전하지 않은 역직렬화(실제 CVE-2023-47174 사례 있음)로 이어짐 — 필요한 필드만 뽑은 `OAuth2AuthorizationRequestSnapshot` record를 Jackson으로 JSON 직렬화해 타입 주입 여지를 없앰.
+- **OAuth2 state 쿠키는 SameSite=Lax, 다른 쿠키는 Strict 유지**: 구글에서 우리 서버로 돌아오는 콜백은 브라우저 입장에서 교차 사이트 리다이렉트라, `SameSite=Strict` 쿠키는 이 요청에 실리지 않아 `authorization_request_not_found` 에러로 로그인이 깨짐(실제 재현). `CookieUtils.build()`에 `sameSite` 오버로드를 추가해 OAuth2 쿠키만 `Lax`로 지정.
+- **계정 자동 연결 시 provider 값은 절대 덮어쓰지 않음**: 같은 이메일로 가입 경로(LOCAL/GOOGLE)와 무관하게 항상 같은 계정으로 귀결시키기로 했지만(`docs/specs.md` 참고), 로그인할 때마다 `provider`를 마지막 로그인 수단으로 갱신하면 "구글 가입자만 일반 회원가입 차단", "구글 가입자는 비밀번호 확인 없이 탈퇴" 같은 기존 분기 로직이 꼬임 — `provider`는 최초 가입 경로를 나타내는 불변값으로 고정.
+- **구글 로그인은 `email_verified` 클레임 확인 필수**: 구글이 응답하는 이메일이 항상 검증된 값은 아님(제3자 도메인 이메일을 구글 계정에 연결한 경우 등) — 검증 안 된 이메일로 자동 연결을 허용하면 계정 탈취 경로가 됨. `email_verified`가 false/null이면 로그인 자체를 거부.
+- **소셜 사용자는 탈퇴 시 비밀번호 확인 생략**: 소셜 가입자는 `password`가 NULL이라 애초에 확인할 비밀번호가 없음. 재인증(구글 재로그인 요구)이 더 안전하지만 별도 플로우 구현이 필요해 과함 — 이미 소프트 삭제(30일 유예)로 되돌릴 수 있어 즉시 확정되는 위험이 낮다는 점을 근거로 확인 없이 탈퇴 허용.
+- **회원가입 시 중복 이메일 메시지는 provider별로 분기, 탈퇴 계정은 뭉뚱그림**: 이미 구글로 가입된 이메일로 일반 회원가입을 시도하면 "Google로 가입된 이메일 입니다. Google 로그인을 이용해주세요"로 구체적으로 안내(Firebase/Google 공식 문서가 권장하는 패턴, 1인 프로젝트라 계정 존재 노출 리스크도 낮음). 단 탈퇴한 계정은 살아있는 계정과 구분해서 알려줄 실익이 없어 기존 "사용할 수 없는 이메일 입니다"로 그대로 유지 — 탈퇴 사실 자체를 외부에 노출하지 않음.
+- **Redis는 RefreshToken 저장이 아니라 AccessToken 블랙리스트+탈퇴 여부 캐싱 용도로만 도입**: RefreshToken을 Redis로 옮기면 조회 속도는 빨라지지만, Redis는 기본적으로 휘발성이라 재시작 시 전체 로그아웃되는 리스크가 새로 생김 — 사용자당 RefreshToken 1개뿐인 지금 규모엔 이 리스크가 이득보다 큼. 반면 "로그아웃해도 AccessToken이 만료 전까지 계속 유효한 문제"와 "매 요청마다 탈퇴 여부 DB 재조회"는 실제로 겪고 있는 문제라 이 두 가지만 Redis로 최적화.
+- **Redis 캐시 값은 User 엔티티 전체가 아니라 `UserAuthCache`(userId+deleted만 담은 record)로 제한**: JPA 엔티티를 그대로 캐싱하면 역직렬화 시 detached 상태가 되어 지연 로딩 예외나 더티체킹 무력화 위험이 있음(과거 실제로 겪은 버그 패턴) — `PrincipalDetails`에 담기는 `User`는 캐시와 무관하게 항상 DB에서 새로 조회, 캐시는 "탈퇴 여부 즉시 확인"이라는 좁은 목적에만 사용.
+- **Redis 값 직렬화는 `GenericJacksonJsonRedisSerializer`(Jackson 3용) + `PolymorphicTypeValidator`로 패키지 화이트리스트 적용**: 흔히 쓰이는 `GenericJackson2JsonRedisSerializer`는 Jackson 2 전용이며 Spring Data Redis 4.0부터 deprecated. 게다가 검증기 없이 기본적으로 무제한 다형성 역직렬화를 허용해 안전하지 않은 역직렬화 위험이 있음 — Jackson 3용 후속 클래스로 교체하고 `com.moneylog.backend.security` 패키지만 역직렬화 허용하도록 제한.
+- **블랙리스트 Redis 키는 AccessToken 원문 대신 SHA-256 해시**: 토큰 원문을 키로 쓰면 만료 전까지 최대 30분간 유효한 토큰이 Redis 키 목록(`KEYS`, 모니터링 도구 등)에 평문 노출됨 — 키 목적(존재 여부 확인)엔 단방향 해시로도 충분해 원문 노출 없이 동일하게 동작.
+- **탈퇴 시 캐시 삭제는 `TransactionSynchronizationManager.afterCommit()`으로 트랜잭션 커밋 이후에 실행**: `@Transactional` 메서드 안에서 캐시를 즉시 지우면, DB 커밋 전(아직 탈퇴가 실제 반영 안 된 상태)에 다른 요청이 캐시를 "탈퇴 안 함"으로 다시 채울 수 있는 경합 상태가 생김 — 캐시 삭제를 커밋 이후로 미뤄 이 틈을 없앰.
+- **Redis 호출 실패는 예외를 삼키고 폴백(fail-open)해 Redis를 필수가 아닌 보조 의존성으로 유지**: 블랙리스트·탈퇴 캐시는 원본 데이터가 아니라 최적화 계층인데, 예외를 그대로 두면 Redis 장애가 로그인과 인증이 필요한 모든 요청의 실패로 번짐(필터 단계 예외는 `GlobalExceptionHandler`도 못 잡음) — 블랙리스트 확인 실패는 통과, 캐시 조회 실패는 DB 조회로 대체. 트레이드오프: Redis 장애 중 로그아웃한 토큰이 잔여 만료시간(최대 30분)만큼 유효할 수 있으나 인증 전체가 멈추는 것보다 감수할 만하다고 판단(탈퇴 캐시 삭제 실패는 이후 DB의 `deletedAt` 재확인으로 걸러져 영향 없음).
+- **Redis 타임아웃은 기본값 대신 명령 250ms/연결 100ms로 단축**: Lettuce는 연결이 끊겨도 명령을 대기열에 쌓아뒀다가 타임아웃에서야 실패시키므로, 폴백이 있어도 타임아웃이 길면 장애 중 모든 요청이 (요청당 Redis 호출 횟수 × 타임아웃)만큼 멈춤(1초로 두었을 때 요청당 약 2초를 실제로 확인). 캐시는 DB 조회보다 오래 기다릴 이유가 없어 AWS ElastiCache 공식 권장값(단일 키 명령 250ms, 연결은 명령보다 짧게 100ms)을 따름. 장애 중 즉시 실패시키는 `REJECT_COMMANDS`와 재연결 백오프 조정은 이 규모엔 과해서 도입하지 않음(배포 후 필요해지면 추가).
+- **Docker Compose 배포는 프론트+백엔드를 같은 도메인(Nginx 리버스 프록시)으로 구성**: 브라우저 입장에서 모든 요청이 같은 origin이 되어 CORS 문제 자체가 없어짐 — 실무 표준 패턴. MySQL/Redis/백엔드는 포트를 호스트에 노출하지 않고 컴포즈 내부 네트워크로만 통신, 외부엔 Nginx만 노출 — 계획했던 "Redis 포트 127.0.0.1 바인딩"이 이 구조로 대체되어 불필요해짐.
+- **MySQL은 root와 별도로 애플리케이션 전용 계정을 만들어 사용**: root로 접속하면 SQL 인젝션 등 취약점 발생 시 피해 범위가 DB 전체로 커짐 — root는 초기화·관리 용도로만 남기고 백엔드는 `moneylog` 권한만 있는 별도 계정으로 접속.
+- **초기화 스크립트 한글 깨짐은 `LANG=C.UTF-8`로 해결, `--skip-character-set-client-handshake`는 채택 안 함**: 원인이 서버 설정이 아니라 초기화 스크립트를 읽는 mysql 클라이언트의 컨테이너 로케일이라 `LANG` 설정이 정확한 해법 — `--skip-character-set-client-handshake`(서버가 클라이언트 요청을 무시)는 근본 원인은 안 고치고 증상만 가리는 우회이자 향후 deprecated 예정이라 배제. 겪은 증상은 `docs/troubleshooting.md` 참고.
+- **`CookieUtils`를 정적 유틸에서 `@Component`로 전환**: `secure` 속성이 배포 환경마다 달라지는 설정값이 되며 `AppProperties` 의존성이 생김 — 의존성이 필요해진 유틸은 정적 메서드가 아니라 빈으로 바꾸는 게 표준.
+- **`spring.jpa.show-sql`은 환경변수 대신 Spring Profile(`local`/`prod`)로 분리**: 배포 위치가 아니라 "로깅 레벨" 성격의 정적 설정이라, 실무에서도 이런 값은 환경변수보다 프로필별 properties 파일로 관리하는 게 정석 — `application-local.properties`(켬)/`application-prod.properties`(끔), `docker-compose.yml`은 `SPRING_PROFILES_ACTIVE=prod`만 지정.
+- **CI/CD는 GitHub Actions, CI/CD 워크플로우 파일도 분리**: 1인 프로젝트에 Jenkins는 별도 서버 유지보수 부담이 커서 배제. `ci.yml`(develop+main 대상)과 `deploy.yml`(main만 대상)을 나눠, develop에 push해도 배포 워크플로우 자체가 반응하지 않게 함 — 조건문 분기보다 파일 분리가 안전.
+- **Nginx에 Let's Encrypt challenge 경로를 미리 준비**: `/.well-known/acme-challenge/`가 SPA 폴백에 걸리면 인증서 발급이 실패함 — `certbot_www` 볼륨을 nginx에 미리 마운트해, 도메인이 생긴 뒤 certbot 연동만 추가하면 되게 함.
+- **Amazon Linux 2023은 compose/buildx 플러그인을 수동 설치**: `dnf install docker`로 설치되는 패키지엔 엔진만 있고 compose/buildx 플러그인이 빠져있음(AWS 공식 이슈로 등록된 알려진 결함) — Docker 공식 GitHub 릴리즈에서 바이너리를 직접 받아 `~/.docker/cli-plugins/`에 설치. Docker 공식 저장소를 추가하는 대안도 있으나 추가 설정이 더 필요해 배제.
+- **certbot은 호스트 설치 대신 컨테이너(1회성)로 실행**: `docker-compose.yml`이 이미 named volume(`certbot_www`) 기반으로 설계돼 있었고, Docker Compose 환경에서 공식적으로 더 널리 문서화된 패턴이라 일관성 차원에서 채택. 호스트 설치(valuepick 방식)도 유효한 대안이지만 기존 설계와 더 맞는 쪽을 선택.
+- **GitHub Actions CD의 SSH 접속을 위해 보안그룹 22번을 0.0.0.0/0으로 개방**: GitHub Actions 러너는 고정 IP가 아니라 매번 접속 IP가 바뀌어 "내 IP" 제한으로는 CD 자체가 불가능(`i/o timeout`으로 실제 실패 확인). 개인키 인증만으로 사실상 안전하다고 판단해 채택 — 더 안전한 "배포 시점에만 동적으로 IP 허용" 방식은 설정 복잡도 대비 지금 규모엔 과해 백로그로 남김.
+- **GitHub 브랜치 보호는 "Lock branch" 대신 "Require pull request + Require status checks"로 구성**: Lock branch는 PR을 통한 머지까지 전면 차단하는 "동결" 기능이라 실제 운영되는 `main`엔 안 맞음(PR 머지가 막히는 문제로 실제 확인). "승인 필요" 조건도 제외 — 1인 프로젝트라 승인해줄 사람이 없어 영구 차단 위험.
+- **Docker 로그 드라이버에 `max-size`/`max-file` 명시**: 기본 `json-file` 드라이버는 로그 파일 크기 제한이 없어 장기 운영 시 디스크 고갈 위험 — 실무 표준값(`10m`/`3`)으로 전체 컨테이너에 적용.
 
 ## 프론트엔드 구현 판단
 
 설계(위 섹션)가 정해진 뒤, 그걸 React 코드로 어떻게 다룰지에 대한 판단. `frontend/CLAUDE.md`의 각 규칙이 왜 그런지는 여기 참고.
 
-- **`PrivateRoute`(라우트 가드)는 토큰을 직접 지우지 않고 리다이렉트 판단만 함(2026-08-22)**: 토큰 정리는 401을 실제로 받는 지점(`authFetch`)에서 하고, 라우트 가드는 이미 정리된 상태(`isLoggedIn`)만 보고 판단 — 정리 책임이 여러 곳으로 흩어지면 로직 변경 시 누락 위험이 커짐.
-- **로그인/회원가입 요청은 `authFetch`가 아니라 별도 `api/auth.js`(`loginRequest`/`registerRequest`)로 분리(2026-08-18)**: `authFetch`는 "로그인된 사용자의 토큰 자동 첨부 + 401 시 refresh"가 목적인데, 로그인·회원가입 시점엔 토큰이 아예 없고 401도 "비밀번호 틀림"이지 "토큰 만료"가 아님 — "인증이 필요한 요청"과 "인증 자체를 처리하는 요청"을 파일 단위로 나누는 기준으로 삼음.
-- **로그인 여부는 localStorage 대신 `GET /api/auth/me` 서버 응답으로 판단(2026-08-26)**: httpOnly+CSRF 전환 이후 토큰이 httpOnly 쿠키에 있어 자바스크립트가 존재 여부조차 알 수 없음 — `AuthProvider`가 마운트될 때마다 서버에 직접 물어보는 방식으로 전환. 확인이 끝나기 전(`isLoading`)에 `PrivateRoute`가 성급하게 `/login`으로 리다이렉트하지 않도록 별도 state로 분리(새로고침 시 잠깐 로그인 화면으로 튕기는 문제 방지).
-- **`AuthProvider`의 초기 로그인 확인도 `fetch` 직접 호출이 아니라 `authFetch` 재사용(2026-08-26)**: 마운트 시 `fetch`로 직접 호출하면 AccessToken만 만료되고 RefreshToken은 아직 유효한 상태에서도 자동 refresh 없이 곧장 로그아웃 처리되는 문제가 있어, 401 시 자동 refresh를 갖춘 `authFetch`를 그대로 재사용. `refreshAccessToken`도 실패 시 예외 대신 boolean을 반환하도록 바꿔 미처리 예외를 방지.
-- **`AuthProvider`의 로그인 상태 확인은 `async/await` 대신 `.then/.catch/.finally` 체이닝 사용(2026-08-26)**: `useEffect` 안에서 별도 `async function`을 선언해 호출하는 방식이 `eslint-plugin-react-hooks`의 `set-state-in-effect` 규칙에 걸림 — React 팀도 오탐(false positive) 사례로 인지 중인 최신 규칙(`react/react#34743`)이라 로직을 바꾸기보다 공식 문서 권장 방식(프로미스 체이닝)으로 우회.
-- **`#root`의 폭 제한(1126px)+테두리를 `.auth-layout` 클래스로 분리(2026-09-04)**: 기존엔 `#root`에 전역으로 걸려 있어 모든 화면이 좁고 가운데 정렬된 카드 형태였음. 사이드바(`Sidebar`+`Layout`) 도입 시 이 제한이 그대로면 사이드바+콘텐츠가 화면 전체 너비를 못 씀 — 로그인/회원가입(좁은 카드 UI)과 로그인 후 화면(사이드바+전체 너비)의 레이아웃 요구가 달라, 폭 제한을 `LoginPage`/`SignupPage` 전용 `.auth-layout` wrapper로 옮김.
-- **모달 등 공통 클래스명은 페이지 wrapper로 스코프 격리(2026-09-06)**: `TransactionsPage.css`가 `.modal-overlay` 등 전역 선택자를 `MyPage.css`와 동일한 이름으로 추가하면서, 나중에 로드된 파일이 이겨 마이페이지 회원탈퇴 버튼 색상이 깨지는 회귀가 발생. CSS Modules 없이 순수 CSS로 원리를 배우는 프로젝트라 클래스명이 파일 간에 그대로 전역으로 부딪힘 — 마크업은 그대로 두고 각 페이지의 wrapper 클래스(`.mypage`, `.transactions-page`)를 후손 선택자로 붙여 스코프만 분리. 앞으로도 `.modal-*`/`.error-message`처럼 흔히 재사용될 이름은 처음부터 wrapper 아래 후손 선택자로 작성하는 것을 기본 규칙으로 삼음.
-- **공용 모달을 네이티브 `<dialog>` 기반 `Modal` 컴포넌트로 통일(2026-10-04)**: `window.confirm`과 페이지마다 따로 있던 `.modal-overlay` div+CSS를 걷어내고 하나로 수렴. ESC 닫기·포커스 가두기·backdrop을 브라우저가 기본 제공해 직접 구현할 필요가 없음. 배경 클릭 판정은 `e.target` 비교 대신 클릭 좌표와 `getBoundingClientRect()` 비교로 구현 — `className`으로 받는 padding이 dialog 자신에게 붙는 구조라 `e.target` 비교만으론 안쪽 패딩 클릭도 "바깥 클릭"으로 오인됨.
-- **월/기간이 바뀌는 조회는 전부 `AbortController`로 이전 요청 취소(2026-10-04)**: 월 이동 버튼을 빠르게 누르면 먼저 보낸 요청이 나중 요청보다 늦게 와서 화면이 엉뚱한 월 데이터로 덮이는 경쟁 조건이 생길 수 있음 — `useEffect` cleanup에서 취소.
-- **label-input 연결은 감싸는(wrapping) 방식 대신 `htmlFor`/`id` 명시적 연결로 통일(2026-10-04)**: WCAG 2.2(1.3.1) 기준 명시적 연결이 권장 표준이고, 감싸는 방식은 일부 스크린리더/브라우저 조합에서 알려진 결함이 있음.
-- **로딩/에러 메시지는 별도 `aria-live` 대신 `role="status"`/`role="alert"`로 통일(2026-10-04)**: 두 role은 `aria-live`를 내장한 축약 표현이라 네이티브 HTML만으로 스크린리더에 상태 변화를 알릴 수 있음.
-- **페이지 컴포넌트는 `React.lazy`+`Suspense`로 지연 로딩(2026-10-04)**: 로그인 전엔 쓸 일 없는 Recharts(대시보드, ~385KB)까지 포함한 번들을 로그인 페이지부터 받을 이유가 없어 라우트 단위로 분리, 메인 청크 644KB→224KB.
-- **Sidebar 로그아웃은 "로그아웃 성공 후 이동" 대신 "먼저 `/login`으로 이동 후 로그아웃 호출"(2026-10-04)**: `PrivateRoute`의 `isLoggedIn` 반응형 리다이렉트와 수동 `navigate()`가 경쟁해 "로그아웃했는데 보던 페이지가 그대로 보이는" 버그가 실제로 발생 — 이동을 먼저 시켜 경쟁 자체를 회피. 트레이드오프: 로그아웃 API가 실패해도 화면은 이미 이동해 있음(실패 시 alert로만 알림, 세션 자체는 안전).
-- **DashboardPage는 summary/breakdown 에러와 trend(추이) 에러를 별도 state로 분리(2026-10-04)**: 두 effect가 같은 에러 state를 공유하면, 추이 차트 조회만 실패해도 이미 성공적으로 뜬 요약카드·카테고리별 지출 파이차트까지 전부 숨겨지는 문제가 있음 — trend 전용 에러 state(`trendError`)를 둬서 추이 패널 안의 차트 부분만 영향받게 함.
-- **모바일 반응형 레이아웃 재배치 기준은 700px로 통일(2026-10-04)**: HomePage가 이미 `@media (max-width: 700px)`로 그리드를 1열화한 선례가 있어, 이 브랜치의 나머지 화면(Dashboard/Budgets)도 같은 기준을 재사용 — index.css의 기존 1024px 미디어쿼리는 글자 크기만 줄이는 별개 용도라 그대로 둠(레이아웃 재배치용 기준과 혼용하지 않음).
-- **`autocomplete`는 필드 성격에 따라 다르게 처리: 거래 메모는 `off`, 마이페이지 닉네임은 `"nickname"`(2026-10-04)**: 거래 메모(TransactionsPage)는 매번 완전히 다른 임의 텍스트라 브라우저가 과거 입력값을 추천 목록으로 띄우는 게 오히려 방해(실제로 저장 버튼 클릭 직전에 그 추천 목록이 첫 클릭을 가로채 "저장이 안 되는 것처럼 느껴지는" 버그로 이어짐) — `off`로 끔. 반대로 닉네임은 HTML 표준 autocomplete 토큰 목록에 실제로 있는 값(`nickname`)이라 WCAG 2.1(1.3.5, 입력 목적 식별)가 `off` 대신 정확한 토큰 지정을 요구함 — 로그인/비밀번호 필드도 같은 이유로 `off` 금지(건드리지 않음).
-- **Sidebar는 700px 이하에서 `position: fixed`+`transform: translateX`로 오프캔버스 드로어로 전환(2026-10-04)**: 기존 220px 고정폭 사이드바를 좁은 화면에 그대로 두면 콘텐츠 영역이 거의 안 남음 — `Layout`이 `isSidebarOpen` state와 햄버거 토글 버튼을 들고 `Sidebar`에 `isOpen`/`onClose`로 내려주는 구조. 네이티브 `<dialog>`(Modal) 대신 직접 만든 이유: 내비게이션 드로어는 실무에서도 보통 모달이 아니라 `<nav>`+오버레이 조합으로 구현(배경 클릭/ESC는 직접 구현, `showModal()`의 전체 포커스 트랩까지는 가져가지 않음).
+- **`PrivateRoute`(라우트 가드)는 토큰을 직접 지우지 않고 리다이렉트 판단만 함**: 토큰 정리는 401을 실제로 받는 지점(`authFetch`)에서 하고, 라우트 가드는 이미 정리된 상태(`isLoggedIn`)만 보고 판단 — 정리 책임이 여러 곳으로 흩어지면 로직 변경 시 누락 위험이 커짐.
+- **로그인/회원가입 요청은 `authFetch`가 아니라 별도 `api/auth.js`(`loginRequest`/`registerRequest`)로 분리**: `authFetch`는 "로그인된 사용자의 토큰 자동 첨부 + 401 시 refresh"가 목적인데, 로그인·회원가입 시점엔 토큰이 아예 없고 401도 "비밀번호 틀림"이지 "토큰 만료"가 아님 — "인증이 필요한 요청"과 "인증 자체를 처리하는 요청"을 파일 단위로 나누는 기준으로 삼음.
+- **로그인 여부는 localStorage 대신 `GET /api/auth/me` 서버 응답으로 판단**: httpOnly+CSRF 전환 이후 토큰이 httpOnly 쿠키에 있어 자바스크립트가 존재 여부조차 알 수 없음 — `AuthProvider`가 마운트될 때마다 서버에 직접 물어보는 방식으로 전환. 확인이 끝나기 전(`isLoading`)에 `PrivateRoute`가 성급하게 `/login`으로 리다이렉트하지 않도록 별도 state로 분리(새로고침 시 잠깐 로그인 화면으로 튕기는 문제 방지).
+- **`AuthProvider`의 초기 로그인 확인도 `fetch` 직접 호출이 아니라 `authFetch` 재사용**: 마운트 시 `fetch`로 직접 호출하면 AccessToken만 만료되고 RefreshToken은 아직 유효한 상태에서도 자동 refresh 없이 곧장 로그아웃 처리되는 문제가 있어, 401 시 자동 refresh를 갖춘 `authFetch`를 그대로 재사용. `refreshAccessToken`도 실패 시 예외 대신 boolean을 반환하도록 바꿔 미처리 예외를 방지.
+- **`AuthProvider`의 로그인 상태 확인은 `async/await` 대신 `.then/.catch/.finally` 체이닝 사용**: `useEffect` 안에서 별도 `async function`을 선언해 호출하는 방식이 `eslint-plugin-react-hooks`의 `set-state-in-effect` 규칙에 걸림 — React 팀도 오탐(false positive) 사례로 인지 중인 최신 규칙(`react/react#34743`)이라 로직을 바꾸기보다 공식 문서 권장 방식(프로미스 체이닝)으로 우회.
+- **`#root`의 폭 제한(1126px)+테두리를 `.auth-layout` 클래스로 분리**: 기존엔 `#root`에 전역으로 걸려 있어 모든 화면이 좁고 가운데 정렬된 카드 형태였음. 사이드바(`Sidebar`+`Layout`) 도입 시 이 제한이 그대로면 사이드바+콘텐츠가 화면 전체 너비를 못 씀 — 로그인/회원가입(좁은 카드 UI)과 로그인 후 화면(사이드바+전체 너비)의 레이아웃 요구가 달라, 폭 제한을 `LoginPage`/`SignupPage` 전용 `.auth-layout` wrapper로 옮김.
+- **모달 등 공통 클래스명은 페이지 wrapper로 스코프 격리**: `TransactionsPage.css`가 `.modal-overlay` 등 전역 선택자를 `MyPage.css`와 동일한 이름으로 추가하면서, 나중에 로드된 파일이 이겨 마이페이지 회원탈퇴 버튼 색상이 깨지는 회귀가 발생. CSS Modules 없이 순수 CSS로 원리를 배우는 프로젝트라 클래스명이 파일 간에 그대로 전역으로 부딪힘 — 마크업은 그대로 두고 각 페이지의 wrapper 클래스(`.mypage`, `.transactions-page`)를 후손 선택자로 붙여 스코프만 분리. 앞으로도 `.modal-*`/`.error-message`처럼 흔히 재사용될 이름은 처음부터 wrapper 아래 후손 선택자로 작성하는 것을 기본 규칙으로 삼음.
+- **공용 모달을 네이티브 `<dialog>` 기반 `Modal` 컴포넌트로 통일**: `window.confirm`과 페이지마다 따로 있던 `.modal-overlay` div+CSS를 걷어내고 하나로 수렴. ESC 닫기·포커스 가두기·backdrop을 브라우저가 기본 제공해 직접 구현할 필요가 없음. 배경 클릭 판정은 `e.target` 비교 대신 클릭 좌표와 `getBoundingClientRect()` 비교로 구현 — `className`으로 받는 padding이 dialog 자신에게 붙는 구조라 `e.target` 비교만으론 안쪽 패딩 클릭도 "바깥 클릭"으로 오인됨.
+- **월/기간이 바뀌는 조회는 전부 `AbortController`로 이전 요청 취소**: 월 이동 버튼을 빠르게 누르면 먼저 보낸 요청이 나중 요청보다 늦게 와서 화면이 엉뚱한 월 데이터로 덮이는 경쟁 조건이 생길 수 있음 — `useEffect` cleanup에서 취소.
+- **label-input 연결은 감싸는(wrapping) 방식 대신 `htmlFor`/`id` 명시적 연결로 통일**: WCAG 2.2(1.3.1) 기준 명시적 연결이 권장 표준이고, 감싸는 방식은 일부 스크린리더/브라우저 조합에서 알려진 결함이 있음.
+- **로딩/에러 메시지는 별도 `aria-live` 대신 `role="status"`/`role="alert"`로 통일**: 두 role은 `aria-live`를 내장한 축약 표현이라 네이티브 HTML만으로 스크린리더에 상태 변화를 알릴 수 있음.
+- **페이지 컴포넌트는 `React.lazy`+`Suspense`로 지연 로딩**: 로그인 전엔 쓸 일 없는 Recharts(대시보드, ~385KB)까지 포함한 번들을 로그인 페이지부터 받을 이유가 없어 라우트 단위로 분리, 메인 청크 644KB→224KB.
+- **Sidebar 로그아웃은 "로그아웃 성공 후 이동" 대신 "먼저 `/login`으로 이동 후 로그아웃 호출"**: `PrivateRoute`의 `isLoggedIn` 반응형 리다이렉트와 수동 `navigate()`가 경쟁해 "로그아웃했는데 보던 페이지가 그대로 보이는" 버그가 실제로 발생 — 이동을 먼저 시켜 경쟁 자체를 회피. 트레이드오프: 로그아웃 API가 실패해도 화면은 이미 이동해 있음(실패 시 alert로만 알림, 세션 자체는 안전).
+- **DashboardPage는 summary/breakdown 에러와 trend(추이) 에러를 별도 state로 분리**: 두 effect가 같은 에러 state를 공유하면, 추이 차트 조회만 실패해도 이미 성공적으로 뜬 요약카드·카테고리별 지출 파이차트까지 전부 숨겨지는 문제가 있음 — trend 전용 에러 state(`trendError`)를 둬서 추이 패널 안의 차트 부분만 영향받게 함.
+- **모바일 반응형 레이아웃 재배치 기준은 700px로 통일**: HomePage가 이미 `@media (max-width: 700px)`로 그리드를 1열화한 선례가 있어, 이 브랜치의 나머지 화면(Dashboard/Budgets)도 같은 기준을 재사용 — index.css의 기존 1024px 미디어쿼리는 글자 크기만 줄이는 별개 용도라 그대로 둠(레이아웃 재배치용 기준과 혼용하지 않음).
+- **`autocomplete`는 필드 성격에 따라 다르게 처리: 거래 메모는 `off`, 마이페이지 닉네임은 `"nickname"`**: 거래 메모(TransactionsPage)는 매번 완전히 다른 임의 텍스트라 브라우저가 과거 입력값을 추천 목록으로 띄우는 게 오히려 방해(실제로 저장 버튼 클릭 직전에 그 추천 목록이 첫 클릭을 가로채 "저장이 안 되는 것처럼 느껴지는" 버그로 이어짐) — `off`로 끔. 반대로 닉네임은 HTML 표준 autocomplete 토큰 목록에 실제로 있는 값(`nickname`)이라 WCAG 2.1(1.3.5, 입력 목적 식별)가 `off` 대신 정확한 토큰 지정을 요구함 — 로그인/비밀번호 필드도 같은 이유로 `off` 금지(건드리지 않음).
+- **Sidebar는 700px 이하에서 `position: fixed`+`transform: translateX`로 오프캔버스 드로어로 전환**: 기존 220px 고정폭 사이드바를 좁은 화면에 그대로 두면 콘텐츠 영역이 거의 안 남음 — `Layout`이 `isSidebarOpen` state와 햄버거 토글 버튼을 들고 `Sidebar`에 `isOpen`/`onClose`로 내려주는 구조. 네이티브 `<dialog>`(Modal) 대신 직접 만든 이유: 내비게이션 드로어는 실무에서도 보통 모달이 아니라 `<nav>`+오버레이 조합으로 구현(배경 클릭/ESC는 직접 구현, `showModal()`의 전체 포커스 트랩까지는 가져가지 않음).

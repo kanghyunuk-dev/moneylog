@@ -2,7 +2,7 @@
 
 실제로 겪은 문제와 해결 과정, 그리고 인증 개념을 학습하며 정리한 기록. 시간순 정리.
 
-## JWT/Spring Security 인증 개념 학습 (2026-07-30 시작, 2026-07-31 완료)
+## JWT/Spring Security 인증 개념 학습
 
 MoneyLog ①단계(로그인 구현) 착수 전, JWT 기반 인증의 전체 흐름을 8단계로 나눠 개념부터 정리.
 
@@ -26,9 +26,8 @@ MoneyLog ①단계(로그인 구현) 착수 전, JWT 기반 인증의 전체 흐
   6. 프론트 토큰 저장(localStorage) + authFetch의 자동 refresh 로직
   7. 마이페이지 (@AuthenticationPrincipal 패턴)
   8. 소프트 삭제 + UserCleanupScheduler(@Scheduled 배치)
-  - 2026-07-31, 1~8단계 전체 정리 완료.
 
-## JWT 무상태성 트레이드오프 (2026-07-31)
+## JWT 무상태성 트레이드오프
 
 인증 개념을 정리하며 확인한 내용. MoneyLog ④단계(Redis 연동)에서 실제로 최적화해볼 대상.
 
@@ -37,7 +36,7 @@ MoneyLog ①단계(로그인 구현) 착수 전, JWT 기반 인증의 전체 흐
 - **더 최적화하는 방법**: DB 조회를 Redis 캐시 조회로 대체 — 탈퇴 처리 시 Redis에 "탈퇴 표시(블랙리스트)"를 즉시 기록해두고, 필터가 매 요청마다 (느린 DB 대신) 빠른 Redis를 조회하도록 바꾸면 "매번 확인한다"는 구조는 유지하면서 성능 손실을 크게 줄일 수 있음. 다만 트래픽 규모가 커야 체감되는 최적화라, 지금 규모에서 DB 재조회 방식 자체가 틀린 선택은 아님.
 - **적용 계획**: MoneyLog ④단계(Redis 연동)에서 이 블랙리스트 캐시 패턴을 직접 구현해보는 것을 세션/리프레시 토큰 저장과 함께 실습 목표로 삼음.
 
-## DB 스키마 실행 검증 (2026-08-07)
+## DB 스키마 실행 검증
 
 `docs/db-schema.sql`을 로컬 MySQL 8.0에 실제로 실행하며 발견/수정한 문제들.
 
@@ -46,17 +45,7 @@ MoneyLog ①단계(로그인 구현) 착수 전, JWT 기반 인증의 전체 흐
 - **한글 시드 데이터는 MySQL 클라이언트 접속 시 `--default-character-set=utf8mb4` 지정 필요**: 안 하면 한글 INSERT에서 인코딩 에러 발생(파일 자체는 UTF-8이 맞았음, 클라이언트 접속 인코딩 문제였음).
 - 이 세 가지 수정 후 6개 테이블 + FK 6개(CASCADE/RESTRICT 정책 포함) + 시드 데이터 15건까지 전부 의도대로 생성되는 것을 `information_schema` 조회로 최종 확인.
 
-## Figma Make 디자인 - 기능 명세 대조 (2026-08-07)
-
-Figma Make로 받은 8개 화면을 `docs/specs.md`의 기능 명세와 하나씩 대조.
-
-- **①단계 대조**: 로그인(이메일+비밀번호+구글 버튼), 회원가입(이메일/닉네임/비밀번호/비밀번호확인), 마이페이지(닉네임 수정/비밀번호 변경/회원탈퇴) 전부 명세와 정확히 일치. 마이페이지의 "계정 관리" 섹션에 "되돌릴 수 없는 작업입니다" 안내와 함께 회원탈퇴 링크가 위험 액션답게 눈에 덜 띄게 배치되어 있음(08-profile.png).
-- **②단계 대조**: 거래내역·예산·통계(대시보드) 화면 모두 명세의 API 구조와 일치. 카테고리 목록도 확정한 15개와 실제 표시된 항목이 정확히 일치. 예산 화면은 초과 카테고리에 "초과" 배지+빨간 진행률 바로 표시되어 색상 가이드도 그대로 지켜짐(05-budget.png). 거래내역 목록은 날짜별로 그룹핑되고, 각 항목은 메모를 제목으로·카테고리를 부제로 보여주는 방식 — 명세는 "카테고리·유형·금액·메모" 순서였는데 실제 화면은 메모를 더 앞에 내세움. 실제 구현 시 표시 순서는 구현 시점에 판단.
-- **②-2단계 대조**: 목표자산 화면이 명세(활성 1개 강조 + 대기 중 여러 개 + 완료됨 구분)와 정확히 일치.
-- **디자인에는 있지만 명세엔 명시 안 됐던 것**: 홈 화면의 "빠른 액션" 버튼(거래 추가/통계 바로가기) — 나쁘지 않은 추가 UX라 실제 구현 시 그대로 채택해도 무방, 필수는 아님.
-- **결론**: 기능 누락 없음.
-
-## 백엔드 뼈대 생성 (2026-08-07)
+## 백엔드 뼈대 생성
 
 Spring Initializr(start.spring.io)에서 직접 옵션을 선택해 zip으로 받음.
 
@@ -69,7 +58,7 @@ Spring Initializr(start.spring.io)에서 직접 옵션을 선택해 zip으로 �
 - **`application.properties` 설정**: `spring.datasource.*`로 로컬 `moneylog` DB 연결, 비밀번호는 `${MYSQL_PASSWORD}` 환경변수 참조. `spring.jpa.hibernate.ddl-auto=validate`로 설정 — JPA가 테이블을 자동 생성/변경하게 두면 신중하게 설계한 FK 정책이 Hibernate 기본값으로 덮어써질 위험이 있어, 스키마의 "정답"은 항상 `docs/db-schema.sql`이 갖고 JPA는 그걸 따르기만 하게 함.
 - **`.gitignore` 정리**: Initializr가 `backend/.gitignore`를 상세하게 자동 생성해줘서, 루트 `.gitignore`의 중복 항목 제거.
 
-## 프론트엔드 뼈대 생성 (2026-08-07)
+## 프론트엔드 뼈대 생성
 
 `npm create vite@latest frontend -- --template react`로 생성.
 
@@ -79,7 +68,7 @@ Spring Initializr(start.spring.io)에서 직접 옵션을 선택해 zip으로 �
 - **"뼈대를 API 없이 미리 만들어도 되는가" 판단**: 원래 "backend API 준비 후 프론트 착수"로 정했던 건 실제 로직(로그인 폼, API 연동, 토큰 저장 등)을 API 없이 짜면 나중에 재작업이 생긴다는 이유였음. 하지만 "뼈대 초기화"는 API에 대한 어떤 가정도 담지 않는 별개 단계라 지금 해둬도 손해가 없다고 재판단.
 - **`.gitignore` 정리**: `frontend/.gitignore`도 Vite가 자동 생성 — 루트 `.gitignore`의 중복 항목 제거.
 
-## httpOnly+CSRF 전환 중 CSRF 403 에러 (2026-08-26)
+## httpOnly+CSRF 전환 중 CSRF 403 에러
 
 localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `CsrfConfigurer::spa()` 적용 직후) 실제로 겪은 문제.
 
@@ -88,7 +77,7 @@ localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `Csr
 - **해결**: `CsrfFilter` 뒤에 `CsrfCookieFilter`(직접 만든 `OncePerRequestFilter`, `request.getAttribute("_csrf")`를 읽어 `CsrfToken.getToken()`을 호출해 강제로 쿠키 생성을 트리거)를 `addFilterAfter`로 추가 — Spring 공식 SPA 가이드의 표준 패턴.
 - **재현 조건 확인**: 실제로는 `AuthProvider`가 마운트 시 `GET /api/auth/me`를 항상 먼저 호출해서 이 상황을 우회시켜주고 있어, 정상적인 사용자 흐름(페이지 로드 → 로그인 시도)에서는 문제가 되지 않음. 브라우저 쿠키를 지운 뒤 새로고침 없이 바로 로그인 버튼을 누르는 것처럼, 페이지 마운트 없이 요청만 보내는 테스트 방식에서만 재현됨 — 이 구분을 몰라서 처음엔 필터가 안 먹힌 줄 알고 재검토했었음.
 
-## 마이페이지 닉네임/비밀번호 변경이 DB에 반영 안 됨 (2026-08-27)
+## 마이페이지 닉네임/비밀번호 변경이 DB에 반영 안 됨
 
 `UserController`/`UserService` 작성 중 Postman으로 `PUT /api/users/me`를 테스트하며 실제로 겪은 문제.
 
@@ -97,7 +86,7 @@ localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `Csr
 - **해결**: `UserService` 메서드 안에서 `userRepository.findById(user.getId())`로 다시 조회한 `managedUser`를 사용 — 이 객체는 지금 트랜잭션에 확실히 attached 상태라 더티 체킹이 정상 동작함. Spring Security + JPA 조합에서 흔히 발생하는 패턴으로, 실무에서도 "Service에서 엔티티를 수정하기 전에 재조회하라"가 표준 해결책으로 알려져 있음(Baeldung 등 확인).
 - **부수적으로 발견한 버그**: 처음 수정할 때 `updatePassword()`에서 현재 비밀번호 검증(`passwordEncoder.matches`)에는 여전히 예전 `user`(detached)를 참조하고, 실제 변경(`changePassword`)에만 `managedUser`를 쓰는 실수가 있었음 — 두 시점 모두 `managedUser`로 통일해 수정.
 
-## `AuthController.me()`가 바디 없는 401을 응답해 자동 refresh가 무력화됨 (2026-08-28)
+## `AuthController.me()`가 바디 없는 401을 응답해 자동 refresh가 무력화됨
 
 `ErrorResponse`에 `errorCode` 필드를 추가해 "토큰 문제(401)"와 "비밀번호 불일치 등 도메인 검증 실패(401)"를 구분하려던 중 실제로 겪은 문제.
 
@@ -106,7 +95,7 @@ localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `Csr
 - **해결**: `me()`도 다른 401 응답들과 동일하게 `ErrorResponse("인증이 필요합니다", "TOKEN_INVALID")`를 바디로 포함하도록 수정 — 반환 타입을 `ResponseEntity<Void>`에서 `ResponseEntity<?>`로 변경(성공 시 바디 없음, 실패 시 `ErrorResponse` 바디로 타입이 갈리기 때문). 브라우저에서 AccessToken 삭제 후 새로고침 시 `me`(401) → `refresh`(200) → `me`(200) 순서로 요청이 나가고 로그인 상태가 유지되는 것까지 확인.
 - **참고**: `errorCode` 도입 자체의 판단 근거는 `docs/decisions.md` "백엔드 구현 판단" 참고.
 
-## 탈퇴 계정 로그인 시도가 permitAll 경로까지 막음 (2026-08-29)
+## 탈퇴 계정 로그인 시도가 permitAll 경로까지 막음
 
 `PrincipalDetailsService.loadUserByUsername()`에 탈퇴 여부 확인(`UsernameNotFoundException("탈퇴한 계정 입니다")`)을 추가한 뒤, 탈퇴 계정으로 실제 로그인을 시도하며 겪은 문제.
 
@@ -115,7 +104,7 @@ localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `Csr
 - **해결**: `JWTAuthorizationFilter`의 `loadUserByUsername()` 호출을 `catch (UsernameNotFoundException e)`로 감싸 SecurityContext 등록만 건너뛰고 `filterChain.doFilter()`는 항상 실행되도록 수정 — 필터 본래의 역할("토큰이 유효하면 인증 등록, 실패해도 다음 필터로 그냥 넘어감")을 되찾음. Spring Security 공식 GitHub 이슈(#14120, #12599 — "PermitAll routes returns 401 when token provided is expired/invalid")로 실제로 흔히 겪는 알려진 문제 패턴임을 확인 후 진행.
 - **참고**: 판단 배경(탈퇴 체크 지점을 로그인/매 요청 인가/refresh 세 곳으로 정리한 이유)은 `docs/decisions.md` "백엔드 구현 판단" 참고.
 
-## Docker 이미지 안에 로컬 `.env`가 구워져 API 요청이 8080으로 나감 (2026-09-27)
+## Docker 이미지 안에 로컬 `.env`가 구워져 API 요청이 8080으로 나감
 
 `docker compose`로 처음 전체 스택을 띄운 뒤 회원가입/로그인에서 CORS 에러를 겪음.
 
@@ -123,7 +112,7 @@ localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `Csr
 - **원인**: `frontend/Dockerfile`의 `COPY . .`가 로컬 `frontend/.env`(`VITE_API_BASE_URL=http://localhost:8080`)까지 빌드 컨텍스트에 포함시킴 — Vite 환경변수는 빌드 시점에 코드에 정적으로 치환되므로 `npm run build` 결과물에 이 값이 그대로 구워짐.
 - **해결**: `frontend/.dockerignore`에 `.env` 추가. `VITE_API_BASE_URL || ''` 처리 덕분에 값이 없으면 상대 경로로 정상 빌드됨. 재빌드는 `--no-cache`로(이전 레이어 캐시 재사용 방지).
 
-## MySQL 초기화 스크립트 실행 시 한글이 깨짐 (2026-09-27)
+## MySQL 초기화 스크립트 실행 시 한글이 깨짐
 
 `docs/db-schema.sql`을 `docker-entrypoint-initdb.d`로 마운트해 최초 실행 시 자동 적용되게 했는데, 카테고리 이름이 깨져서 저장됨.
 
@@ -132,7 +121,7 @@ localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `Csr
 - **해결**: `docker-compose.yml`의 `mysql` 서비스에 `LANG: C.UTF-8` 추가. 볼륨은 최초 1회만 초기화되므로 `docker compose down -v`로 지우고 재실행해야 반영됨.
 - **참고**: 채택 이유는 `docs/decisions.md` "백엔드 구현 판단" 참고.
 
-## Dashboard 재조회 useEffect가 `react-hooks/set-state-in-effect`에 걸림 (2026-09-28)
+## Dashboard 재조회 useEffect가 `react-hooks/set-state-in-effect`에 걸림
 
 `refresh` 함수(`useCallback`)를 `useEffect` 안으로 합치는 과정에서 겪은 문제.
 
@@ -140,7 +129,7 @@ localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `Csr
 - **원인**: effect의 동기 부분에서 바로 `setState`를 부르면 연쇄 렌더링을 유발할 수 있다는 React 규칙. 그 줄을 그냥 지우면 통과는 되지만 재조회 시 로딩 상태가 안 켜지는 동작 변화가 생겨 땜질에 가까움.
 - **해결**: effect 안에 `async` 함수를 선언해 `setIsLoading`/`try`/`finally`를 그 함수 안으로 옮기고, effect 몸체는 호출만 하게 함 — 기존 로딩 동작을 유지하면서 규칙도 만족.
 
-## 구글 로그인 콜백이 `authorization_request_not_found`로 실패 (2026-09-20)
+## 구글 로그인 콜백이 `authorization_request_not_found`로 실패
 
 `CookieOAuth2AuthorizationRequestRepository`의 쿠키를 `jakarta.servlet.http.Cookie`에서 `CookieUtils`(secure/sameSite 적용) 기반으로 교체한 직후, 실제 브라우저로 로그인을 테스트하며 겪은 문제.
 
@@ -149,7 +138,7 @@ localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `Csr
 - **해결**: `CookieUtils.build()`에 `sameSite`를 인자로 받는 오버로드를 추가하고, OAuth2 state 쿠키만 `"Lax"`로 지정(다른 쿠키는 기존대로 `"Strict"` 유지). `Lax`는 최상위 탐색(리다이렉트 포함)에는 쿠키를 실어 보내되 `iframe`/`fetch` 같은 배경 요청에는 안 실어서, `None`보다 안전하면서 OAuth2 리다이렉트 흐름은 정상 동작.
 - **디버깅 팁**: OAuth2 로그인 실패는 기본 로그 레벨로는 원인이 전혀 안 보이므로, `authorization_request_not_found` 같은 모호한 에러를 만나면 위 두 로그 레벨을 임시로 켜서 `TRACE` 스택트레이스를 확인하는 게 가장 빠른 진단 경로.
 
-## `RedisTemplate` 제네릭 타입 불일치로 빈을 못 찾음 (2026-09-23)
+## `RedisTemplate` 제네릭 타입 불일치로 빈을 못 찾음
 
 `TokenBlacklistService`(`RedisTemplate<String, String>`), `PrincipalDetailsService`(`RedisTemplate<String, UserAuthCache>`), `UserService`(`RedisTemplate<String, Object>`)를 각각 다른 제네릭 타입으로 주입받게 만든 뒤 서버를 처음 실행하며 겪은 문제.
 
@@ -157,7 +146,7 @@ localStorage → httpOnly 쿠키+CSRF 전환 작업 중(`SecurityConfig`에 `Csr
 - **원인**: `spring-boot-starter-data-redis`의 자동 설정이 만들어주는 기본 `RedisTemplate` 빈은 `RedisTemplate<Object, Object>` 타입 하나뿐. Java 제네릭은 런타임에 타입 정보가 지워지는(type erasure) 특성이 있어 자동 설정이 제공하는 빈의 실제 타입과 우리가 요구한 타입(`<String, UserAuthCache>` 등)이 일치하지 않으면 스프링이 주입 후보에서 제외함 — 여러 클래스가 제각기 다른 제네릭 타입으로 `RedisTemplate`을 요구하면 이런 불일치가 발생.
 - **해결**: `config/RedisConfig`에 `RedisTemplate<String, Object>` 빈을 명시적으로 등록하고, `TokenBlacklistService`/`PrincipalDetailsService`도 전부 이 타입으로 통일. `Object` 타입으로 받은 값을 실제 타입으로 쓸 때는 `instanceof` 체크 후 형변환.
 
-## `GenericJackson2JsonRedisSerializer`가 Jackson 3 `ObjectMapper`를 안 받음 (2026-09-23)
+## `GenericJackson2JsonRedisSerializer`가 Jackson 3 `ObjectMapper`를 안 받음
 
 Redis 값 직렬화기를 설정하며, `com.fasterxml.jackson.databind.ObjectMapper`(Jackson 2)가 아니라 `tools.jackson.databind.ObjectMapper`(Jackson 3, Spring Boot 4 기본)로 만든 객체를 넘기려다 겪은 문제.
 
@@ -166,7 +155,7 @@ Redis 값 직렬화기를 설정하며, `com.fasterxml.jackson.databind.ObjectMa
 - **해결**: `GenericJacksonJsonRedisSerializer.builder().enableDefaultTyping(typeValidator).build()`로 교체 — `ObjectMapper`를 직접 조립할 필요 없이 Jackson 3 전용 빌더가 `PolymorphicTypeValidator`를 바로 받음. 참고로 신버전은 구버전과 달리 `PolymorphicTypeValidator` 없이는 다형성 역직렬화를 기본으로 켜지 않도록 설계가 바뀜(안전한 기본값으로 개선).
 - **판단 배경**: 안전한 역직렬화로 이 방식을 채택한 이유는 `docs/decisions.md` "백엔드 구현 판단" 참고.
 
-## Docker Compose 빌드 시 "compose build requires buildx" 에러 (2026-09-30)
+## Docker Compose 빌드 시 "compose build requires buildx" 에러
 
 EC2에 Docker/Git 설치 후 `docker compose up --build -d`를 처음 실행하며 겪은 문제.
 
@@ -174,7 +163,7 @@ EC2에 Docker/Git 설치 후 `docker compose up --build -d`를 처음 실행하�
 - **원인**: Amazon Linux 2023의 `dnf install docker`가 설치하는 패키지엔 buildx 플러그인이 아예 없음.
 - **해결**: GitHub 릴리즈에서 buildx 바이너리를 직접 받아 `~/.docker/cli-plugins/docker-buildx`에 설치(실행 권한 부여 포함). compose 플러그인도 같은 방식으로 별도 설치 필요했음.
 
-## `.env`의 `GOOGLE_CLIENT_SECRET`이 빈 문자열로 적용됨 (2026-09-30)
+## `.env`의 `GOOGLE_CLIENT_SECRET`이 빈 문자열로 적용됨
 
 EC2에서 `nano`로 `.env`를 직접 타이핑해서 재작성한 뒤 겪은 문제.
 
@@ -182,7 +171,7 @@ EC2에서 `nano`로 `.env`를 직접 타이핑해서 재작성한 뒤 겪은 문
 - **원인**: `.env` 파일에서 `GOOGLE_CLIENT_SECRET=` 줄이 누락되거나 오타로 Docker Compose가 값을 못 읽음. `GOOGLE_CLIENT_ID`는 같은 경고가 없어 그 줄만 문제였음을 특정.
 - **해결**: `.env` 내용을 `cat`으로 재확인 후 정확한 값으로 재작성, `docker compose up -d`로 backend 컨테이너만 재생성(값만 바뀐 경우 `--build` 불필요).
 
-## `authFetch`의 토큰 재발급이 항상 "실패"로 처리됨 (2026-10-04)
+## `authFetch`의 토큰 재발급이 항상 "실패"로 처리됨
 
 프론트엔드 전면 마무리 작업 중 `authFetch.js`의 토큰 재발급 로직을 single-flight 패턴으로 바꾸려다 기존 코드에서 실제로 겪은 문제.
 
@@ -190,7 +179,7 @@ EC2에서 `nano`로 `.env`를 직접 타이핑해서 재작성한 뒤 겪은 문
 - **원인**: 진행 중인 refresh 요청을 저장해두는 모듈 스코프 변수(`refreshPromise`)가 선언돼 있지 않았고, `await`한 fetch 결과를 그 변수가 아니라 엉뚱한 변수(`response`)에 저장하고 있었음 — 함수가 실제 재발급 성공 여부와 무관하게 항상 `undefined`(falsy)를 반환해 호출부가 매번 "재발급 실패"로 처리.
 - **해결**: `refreshPromise`를 모듈 스코프에 제대로 선언하고, 이미 진행 중인 refresh가 있으면 새로 요청을 보내지 않고 그 프로미스를 같이 기다리는 single-flight 패턴으로 재작성.
 
-## AbortController 도입 후 DashboardPage가 크래시 (2026-10-04)
+## AbortController 도입 후 DashboardPage가 크래시
 
 월별 조회에 `AbortController`를 도입하는 과정에서 실제로 겪은 문제.
 
@@ -198,7 +187,7 @@ EC2에서 `nano`로 `.env`를 직접 타이핑해서 재작성한 뒤 겪은 문
 - **원인**: 요청이 취소(`AbortError`)될 때도 `finally`가 실행되어 `isLoading`이 `false`가 되는데, 성공 데이터(`summary`)는 여전히 `null`인 상태로 남아 렌더링이 그대로 진행됨.
 - **해결**: `finally`를 제거하고, 성공했을 때와 실제 에러(`AbortError`가 아닐 때)일 때만 `setIsLoading(false)`를 호출.
 
-## 로그아웃 버튼을 눌러도 보던 페이지가 그대로 유지됨 (2026-10-04)
+## 로그아웃 버튼을 눌러도 보던 페이지가 그대로 유지됨
 
 `Sidebar`의 로그아웃 버튼을 실제로 눌러보며 겪은 문제.
 
