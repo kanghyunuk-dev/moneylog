@@ -46,7 +46,7 @@
 
 **제외**: 관리자 페이지 (1인용 도메인에 부적합). 순서 변경 이유, 범위 결정 배경은 `docs/decisions.md` 참고.
 
-## 현재 상태 (2026-10-04 기준)
+## 현재 상태 (2026-10-05 기준)
 - [x] JWT/Spring Security 인증 개념 학습 완료 (8단계, `docs/troubleshooting.md` 참고)
 - [x] ①②②-2③ 기능 명세 확정 (`docs/specs.md`)
 - [x] DB 스키마 6개 테이블 설계 + MySQL 실행 검증 완료 (`docs/db-schema.sql`)
@@ -66,7 +66,9 @@
 - [x] **배포(v1.0.0) 전체 완료** — AWS EC2(t3.micro) + Docker Compose(MySQL/Redis/Backend/Nginx) + Route53 도메인 연결 + Let's Encrypt HTTPS + GitHub Actions CI/CD(main push 시 자동 배포) 전부 실동작 검증 완료. `https://moneylog.store`에서 전체 기능 운영 반영 확인. 판단 근거는 `docs/decisions.md`, 겪은 문제는 `docs/troubleshooting.md` 참고
 - [x] **프론트엔드 전면 마무리 완료(`feature/frontend-polish`)** — label htmlFor/id 명시적 연결 전면 재작업, 공용 모달(`Modal`/`ConfirmDialog`) 컴포넌트화, `ErrorBoundary`/`NotFoundPage` 추가, 라우트 단위 코드 스플리팅(`React.lazy`+`Suspense`), `authFetch` 토큰재발급 버그·AbortController 경쟁조건·로그아웃 리다이렉트 경쟁 수정 등. 판단 근거는 `docs/decisions.md`, 겪은 버그는 `docs/troubleshooting.md` 참고
 - [x] **모바일 반응형 적용 완료(`feature/frontend-polish`)** — Sidebar를 700px 이하에서 고정 드로어(햄버거 버튼+배경클릭/ESC/메뉴클릭 시 닫힘)로 전환, Dashboard 2단 패널·요약카드 그리드 1열화, 헤더 줄 `flex-wrap` 등. 실제 화면 확인 완료
+- [x] **README.md 작성 완료** — 개발동기/기술스택/주요기능(스크린샷)/아키텍처(Mermaid)/ERD/폴더구조/API개요/기술적 의사결정·트러블슈팅 하이라이트/실행방법/배포범위/개선사항 전체 작성
+- [x] **목표자산 진행률(%) 표시 버그 수정** — 활성 목표 카드에 진행률 계산 로직은 있었는데 화면엔 퍼센트가 안 보이던 버그, 홈 화면과 레이아웃 통일하며 같이 수정
+- [x] **v1.1.0 `main` 배포 완료** — 프론트엔드 접근성/UX/성능 보완+모바일 반응형+README+목표자산 버그수정을 `main`에 머지, GitHub Actions CD 성공 확인(`https://moneylog.store`)
 - [ ] (백로그, 급하지 않음) `GlobalExceptionHandler`의 프레임워크 예외 핸들러가 계속 늘어나면 `ResponseEntityExceptionHandler` 상속으로 전환 검토
-- [ ] README.md 내용 보강(현재 2줄뿐) — 프로젝트 소개/기술 스택/배포 주소/실행 방법
 
 다른 컴퓨터에서 이어갈 때는 `docs/setup.md` 체크리스트부터 확인.
