@@ -45,6 +45,13 @@
     cursor: pointer;
 }
 
+.goals-page .active-goal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
 .goals-page .active-badge {
     display: inline-block;
     background: var(--accent-bg);
@@ -53,7 +60,12 @@
     font-weight: 600;
     padding: 3px 10px;
     border-radius: 999px;
-    margin-bottom: 10px;
+}
+
+.goals-page .active-goal-percent {
+    color: var(--accent);
+    font-size: 18px;
+    font-weight: 700;
 }
 
 .goals-page .goal-date {

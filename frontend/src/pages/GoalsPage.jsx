@@ -114,8 +114,13 @@ function GoalsPage() {
         }
     }
 
+    function calcGoalPercent(goal) {
+        if (goal.targetAmount === 0) return 0;
+        return Math.max(0, Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100)));
+    }
+
     function renderProgress(goal) {
-        const percent = goal.targetAmount === 0 ? 0 : Math.max(0, Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100)));
+        const percent = calcGoalPercent(goal);
         return (
             <div className="progress-track">
                 <div className="progress-fill" style={{ width: `${percent}%` }} />
@@ -142,7 +147,10 @@ function GoalsPage() {
                 <>
                     {activeGoal && (
                         <div className="active-goal-card" onClick={() => handleEditStart(activeGoal)}>
-                            <span className="active-badge">진행 중인 목표</span>
+                            <div className="active-goal-header">
+                                <span className="active-badge">진행 중인 목표</span>
+                                <span className="active-goal-percent">{calcGoalPercent(activeGoal)}%</span>
+                            </div>
                             <h2>{activeGoal.name}</h2>
                             <p className="goal-date">{activeGoal.activatedAt.slice(0, 10)} 시작</p>
                             {renderProgress(activeGoal)}
