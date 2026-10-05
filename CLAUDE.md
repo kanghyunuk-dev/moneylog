@@ -44,9 +44,9 @@
 | ④ | Redis 연동 | 세션/토큰 캐시 관리, JWT 무상태성 트레이드오프 최적화 | 완료 |
 | ⑤ | 환율 API 연동(선택) | 외부 REST API 연동 실무 경험 | 선택 |
 
-**제외**: 관리자 페이지 (1인용 도메인에 부적합, 2차 게시판형 프로젝트로 이관). 순서 변경 이유, 범위 결정 배경은 `docs/decisions.md` 참고.
+**제외**: 관리자 페이지 (1인용 도메인에 부적합). 순서 변경 이유, 범위 결정 배경은 `docs/decisions.md` 참고.
 
-## 현재 상태 (2026-09-24 기준)
+## 현재 상태 (2026-10-04 기준)
 - [x] JWT/Spring Security 인증 개념 학습 완료 (8단계, `docs/troubleshooting.md` 참고)
 - [x] ①②②-2③ 기능 명세 확정 (`docs/specs.md`)
 - [x] DB 스키마 6개 테이블 설계 + MySQL 실행 검증 완료 (`docs/db-schema.sql`)
@@ -55,17 +55,18 @@
 - [x] 프론트 뼈대 생성 (Vite+React, `npm run dev` 성공)
 - [x] `frontend/CLAUDE.md` 작성 완료 (스타일링/상태관리/컴포넌트/API 분리/토큰 저장 방침)
 - [x] `backend/CLAUDE.md` 작성 완료 (패키지 구조/JPA 규칙/코드 스타일/인증 보안, 판단 근거는 `docs/decisions.md` "백엔드 구현 판단" 참고)
-- [x] **①단계(로그인/회원가입, JWT 인증) 전체 완료(2026-08-30)** — 회원가입/로그인/토큰 관리(httpOnly+CSRF)/마이페이지/회원탈퇴(소프트삭제+30일 뒤 하드삭제) 8단계 전부 실동작 검증 완료. 판단 근거는 `docs/decisions.md`, 겪은 버그는 `docs/troubleshooting.md` 참고
-- [x] **③단계(소셜로그인, 구글) 전체 완료(2026-09-20)** — OAuth2 로그인 흐름(쿠키 기반 state 관리로 STATELESS 유지), 이메일 기준 계정 자동 연결, `email_verified` 검증, 소셜 사용자 탈퇴/비밀번호변경 처리 구현+실동작 검증 완료. 최종 코드 검토에서 나온 보안 이슈(쿠키 역직렬화, secure/sameSite, 리다이렉트 URI 하드코딩) 전부 수정 완료. 판단 근거는 `docs/decisions.md` 참고
-- [x] **④단계(Redis 연동) 전체 완료(2026-09-23)** — 로그아웃/탈퇴 시 AccessToken 즉시 블랙리스트 처리, 사용자 탈퇴 여부 캐싱(5분 TTL) 구현+실동작 검증 완료. RefreshToken은 계속 MySQL 유지(1인 프로젝트 규모엔 Redis 이전 이득 대비 휘발성 리스크가 더 큼). 최종 코드 검토에서 나온 이슈(테스트 누락, 안전하지 않은 Jackson 역직렬화, 블랙리스트 키 토큰 원문 노출, 트랜잭션-캐시 삭제 순서 경합, 캐시 키 상수 중복, Redis 장애 시 인증 마비) 전부 수정 완료. 판단 근거는 `docs/decisions.md` 참고
-- [x] **②단계(거래/예산/카테고리/대시보드) 전체 완료(2026-09-14)** — 거래/예산/통계 API+화면 전부 `develop`에 병합 완료(v0.3.0~v0.5.0). 판단 근거는 `docs/decisions.md` 참고
-- [x] **②-2단계(목표자산) API+화면 완료(2026-09-16)** — 목표 CRUD, 활성/대기/완료 상태 전환, 진행률 실시간 계산 전부 구현. 판단 근거는 `docs/decisions.md` 참고
-- [x] **카테고리 아이콘(이모지) 도입 완료(2026-09-17)** — `category.icon` 컬럼 추가(고정 15개 매핑), 거래내역/예산 화면에 반영. 판단 근거는 `docs/decisions.md` 참고
-- [x] **홈 화면 완료(2026-09-17)** — 인사말, 목표 위젯(진행률), 요약 카드 3개, 최근 거래 5건, 바로가기 카드(거래 추가/통계) 구현. 이로써 ②-2단계 전체(목표자산+홈 화면) 마무리
-- [x] `bugfix/backlog-cleanup` 브랜치에서 백로그 정리 완료(2026-09-08) — 폼 state 문자열 통일, 카테고리 로딩 중 등록 모달 버튼 비활성화, `TransactionRepository` 동일 날짜 2차 정렬(`id`), `getTransactions()` N+1(fetch join), `month` 파라미터 에러 응답 형식 통일. 겸사겸사 로그인/회원가입 `<a href>`→`Link` 전환, JWT 만료시간 하드코딩 제거(`JWTProperties` 실제 주입)도 같이 처리. 판단 근거는 `docs/decisions.md` 참고
+- [x] **①단계(로그인/회원가입, JWT 인증) 전체 완료** — 회원가입/로그인/토큰 관리(httpOnly+CSRF)/마이페이지/회원탈퇴(소프트삭제+30일 뒤 하드삭제) 8단계 전부 실동작 검증 완료. 판단 근거는 `docs/decisions.md`, 겪은 버그는 `docs/troubleshooting.md` 참고
+- [x] **③단계(소셜로그인, 구글) 전체 완료** — OAuth2 로그인 흐름(쿠키 기반 state 관리로 STATELESS 유지), 이메일 기준 계정 자동 연결, `email_verified` 검증, 소셜 사용자 탈퇴/비밀번호변경 처리 구현+실동작 검증 완료. 최종 코드 검토에서 나온 보안 이슈(쿠키 역직렬화, secure/sameSite, 리다이렉트 URI 하드코딩) 전부 수정 완료. 판단 근거는 `docs/decisions.md` 참고
+- [x] **④단계(Redis 연동) 전체 완료** — 로그아웃/탈퇴 시 AccessToken 즉시 블랙리스트 처리, 사용자 탈퇴 여부 캐싱(5분 TTL) 구현+실동작 검증 완료. RefreshToken은 계속 MySQL 유지(1인 프로젝트 규모엔 Redis 이전 이득 대비 휘발성 리스크가 더 큼). 최종 코드 검토에서 나온 이슈(테스트 누락, 안전하지 않은 Jackson 역직렬화, 블랙리스트 키 토큰 원문 노출, 트랜잭션-캐시 삭제 순서 경합, 캐시 키 상수 중복, Redis 장애 시 인증 마비) 전부 수정 완료. 판단 근거는 `docs/decisions.md` 참고
+- [x] **②단계(거래/예산/카테고리/대시보드) 전체 완료** — 거래/예산/통계 API+화면 전부 `develop`에 병합 완료(v0.3.0~v0.5.0). 판단 근거는 `docs/decisions.md` 참고
+- [x] **②-2단계(목표자산) API+화면 완료** — 목표 CRUD, 활성/대기/완료 상태 전환, 진행률 실시간 계산 전부 구현. 판단 근거는 `docs/decisions.md` 참고
+- [x] **카테고리 아이콘(이모지) 도입 완료** — `category.icon` 컬럼 추가(고정 15개 매핑), 거래내역/예산 화면에 반영. 판단 근거는 `docs/decisions.md` 참고
+- [x] **홈 화면 완료** — 인사말, 목표 위젯(진행률), 요약 카드 3개, 최근 거래 5건, 바로가기 카드(거래 추가/통계) 구현. 이로써 ②-2단계 전체(목표자산+홈 화면) 마무리
+- [x] `bugfix/backlog-cleanup` 브랜치에서 백로그 정리 완료 — 폼 state 문자열 통일, 카테고리 로딩 중 등록 모달 버튼 비활성화, `TransactionRepository` 동일 날짜 2차 정렬(`id`), `getTransactions()` N+1(fetch join), `month` 파라미터 에러 응답 형식 통일. 겸사겸사 로그인/회원가입 `<a href>`→`Link` 전환, JWT 만료시간 하드코딩 제거(`JWTProperties` 실제 주입)도 같이 처리. 판단 근거는 `docs/decisions.md` 참고
+- [x] **배포(v1.0.0) 전체 완료** — AWS EC2(t3.micro) + Docker Compose(MySQL/Redis/Backend/Nginx) + Route53 도메인 연결 + Let's Encrypt HTTPS + GitHub Actions CI/CD(main push 시 자동 배포) 전부 실동작 검증 완료. `https://moneylog.store`에서 전체 기능 운영 반영 확인. 판단 근거는 `docs/decisions.md`, 겪은 문제는 `docs/troubleshooting.md` 참고
+- [x] **프론트엔드 전면 마무리 완료(`feature/frontend-polish`)** — label htmlFor/id 명시적 연결 전면 재작업, 공용 모달(`Modal`/`ConfirmDialog`) 컴포넌트화, `ErrorBoundary`/`NotFoundPage` 추가, 라우트 단위 코드 스플리팅(`React.lazy`+`Suspense`), `authFetch` 토큰재발급 버그·AbortController 경쟁조건·로그아웃 리다이렉트 경쟁 수정 등. 판단 근거는 `docs/decisions.md`, 겪은 버그는 `docs/troubleshooting.md` 참고
+- [x] **모바일 반응형 적용 완료(`feature/frontend-polish`)** — Sidebar를 700px 이하에서 고정 드로어(햄버거 버튼+배경클릭/ESC/메뉴클릭 시 닫힘)로 전환, Dashboard 2단 패널·요약카드 그리드 1열화, 헤더 줄 `flex-wrap` 등. 실제 화면 확인 완료
 - [ ] (백로그, 급하지 않음) `GlobalExceptionHandler`의 프레임워크 예외 핸들러가 계속 늘어나면 `ResponseEntityExceptionHandler` 상속으로 전환 검토
+- [ ] README.md 내용 보강(현재 2줄뿐) — 프로젝트 소개/기술 스택/배포 주소/실행 방법
 
 다른 컴퓨터에서 이어갈 때는 `docs/setup.md` 체크리스트부터 확인.
-
-## 배경
-2차 프로젝트(게시판형 서비스, 도메인 미정): MoneyLog 완료 후 별도 저장소로 진행 예정. React+TypeScript 도입, 파일업로드/댓글/좋아요·찜(N:M)/페이지네이션/관리자 페이지, MyBatis 후보.

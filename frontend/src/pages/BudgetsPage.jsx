@@ -2,6 +2,8 @@ import './BudgetsPage.css';
 import { useCallback, useEffect, useState } from 'react';
 import { getBudgets, createBudget, updateBudget, deleteBudget } from "../api/budget";
 import { getCategories } from "../api/category";
+import Modal from "../components/Modal";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 function BudgetsPage() {
     const now = new Date();
@@ -15,6 +17,7 @@ function BudgetsPage() {
     const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [categoriesError, setCategoriesError] = useState(false);
 
     // month 문자열 (yyyy-MM 형태, API 파라미터용)
     const monthParam = `${year}-${String(month).padStart(2, '0')}`;
@@ -31,25 +34,40 @@ function BudgetsPage() {
     const [formAmount, setFormAmount] = useState('');
     const [formError, setFormError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
     // 예산 목록 조회
-    const refreshBudgets = useCallback(() => {
-        getBudgets(monthParam)
-            .then((data) => setBudgets(data))
-            .catch((err) => setError(err.message))
-            .finally(() => setIsLoading(false));
+    const refreshBudgets = useCallback(async (signal) => {
+        setError('');
+        try {
+            const data = await getBudgets(monthParam, signal);
+            setBudgets(data);
+            setIsLoading(false);
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                setError(err.message);
+                setIsLoading(false);
+            }
+        }
     }, [monthParam]);
 
     // 예산 목록 조회 (year, month 바뀔 때마다 재조회)
     useEffect(() => {
-        refreshBudgets();
+        const controller = new AbortController();
+
+        async function load() {
+            await refreshBudgets(controller.signal);
+        }
+
+        load();
+        return () => controller.abort();
     }, [refreshBudgets]);
 
     // 카테고리 목록은 한 번만 조회
     useEffect(() => {
         getCategories()
             .then((data) => setCategories(data))
-            .catch(() => setCategories([]))
+            .catch(() => setCategoriesError(true))
             .finally(() => setIsCategoriesLoading(false));
     }, []);
 
@@ -120,12 +138,13 @@ function BudgetsPage() {
         }
     }
 
-    // 예산 삭제
-    async function handleDelete() {
-        if (!window.confirm('정말 삭제하시겠습니까?')) {
-            return;
-        }
+    // 예산 삭제 - 삭제 버튼은 확인창만 먼저 염
+    function handleDeleteClick() {
+        setIsConfirmOpen(true);
+    }
 
+    async function handleDeleteConfirm() {
+        setIsConfirmOpen(false);
         setFormError('');
         setIsSubmitting(true);
 
@@ -142,13 +161,14 @@ function BudgetsPage() {
 
     return (
         <div className="budgets-page">
+            <title>예산 · MoneyLog</title>
             <div className="budgets-header">
                 <div>
                     <h1>예산 관리</h1>
                     <p>카테고리별 예산을 설정하고 지출을 관리하세요</p>
                 </div>
-                <button type="button" className="add-button" onClick={handleAddStart} disabled={isCategoriesLoading}>
-                    {isCategoriesLoading ? '불러오는 중...' : '+ 예산 추가'}
+                <button type="button" className="add-button" onClick={handleAddStart} disabled={isCategoriesLoading || categoriesError}>
+                    {isCategoriesLoading ? '불러오는 중...' : categoriesError ? '카테고리 로딩 실패' : '+ 예산 추가'}
                 </button>
             </div>
 
@@ -158,7 +178,7 @@ function BudgetsPage() {
                 <button type="button" onClick={handleNextMonth}>›</button>
             </div>
 
-            {error && <p className='error-message'>{error}</p>}
+            {error && <p role="alert" className="error-message">{error}</p>}
 
             {/* 상단 요약 카드 3개 */}
             <div className="summary-cards">
@@ -177,10 +197,10 @@ function BudgetsPage() {
             </div>
 
             {isLoading ? (
-                <p>불러오는중 ...</p>
-            ) : (
+                <p role="status">불러오는 중...</p>
+            ) : error ? null : (
                 <div className="budget-list">
-                    {budgets.length === 0 && <p className='empty-message'>이 달에 설정된 예산이 없습니다</p>}
+                    {budgets.length === 0 && <p className="empty-message">이 달에 설정된 예산이 없습니다</p>}
                     {budgets.map((b) => {
                         // 예산 대비 지출 퍼센트 계산 (표시는 100%에서 잘라내고 텍스트로 실제 초과율 안내)
                         const percent = b.amount === 0 ? 0 : Math.round((b.spentAmount / b.amount) * 100);
@@ -211,27 +231,26 @@ function BudgetsPage() {
             )}
 
             {/* 등록/수정 통합 모달 */}
-            {isModalOpen && (
-                <div className="modal-overlay">
-                    <form className="modal-content" onSubmit={handleFormSubmit}>
+            <Modal isOpen={isModalOpen} onClose={handleModalClose} className="modal-content">
+                <form onSubmit={handleFormSubmit}>
                         <h2>{editingBudget ? '예산 수정' : '예산 추가'}</h2>
 
-                        <label>카테고리</label>
-                        <select value={formCategoryId} onChange={(e) => setFormCategoryId(e.target.value)} disabled={!!editingBudget} required>
+                        <label htmlFor="category">카테고리</label>
+                        <select id="category" value={formCategoryId} onChange={(e) => setFormCategoryId(e.target.value)} disabled={!!editingBudget} required>
                             <option value="">선택하세요</option>
                             {categories.filter((c) => c.type === 'EXPENSE').map((c) => (
                                 <option key={c.id} value={c.id}>{c.name}</option>
                             ))}
                         </select>
 
-                        <label>금액</label>
-                        <input type="number" placeholder="예산 금액 입력" value={formAmount} onChange={(e) => setFormAmount(e.target.value)} required />
+                        <label htmlFor="amount">금액</label>
+                        <input id="amount" type="number" placeholder="예산 금액 입력" value={formAmount} onChange={(e) => setFormAmount(e.target.value)} required />
 
-                        {formError && <p className="error-message">{formError}</p>}
+                        {formError && <p role="alert" className="error-message">{formError}</p>}
 
                         <div className="modal-actions">
                             {editingBudget && (
-                                <button type="button" className="delete-button" onClick={handleDelete} disabled={isSubmitting}>
+                                <button type="button" className="delete-button" onClick={handleDeleteClick} disabled={isSubmitting}>
                                     {isSubmitting ? '삭제 중 ...' : '삭제'}
                                 </button>
                             )}
@@ -240,9 +259,15 @@ function BudgetsPage() {
                                 {isSubmitting ? '저장 중...' : '저장'}
                             </button>
                         </div>
-                    </form>
-                </div>
-            )}
+                </form>
+            </Modal>
+
+            <ConfirmDialog
+                isOpen={isConfirmOpen}
+                message="정말 삭제하시겠습니까?"
+                onConfirm={handleDeleteConfirm}
+                onCancel={() => setIsConfirmOpen(false)}
+            />
         </div>
     );
 }

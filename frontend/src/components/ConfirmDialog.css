@@ -1,0 +1,35 @@
+.confirm-dialog {
+    width: 90%;
+    max-width: 320px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 24px;
+    text-align: center;
+}
+
+.confirm-dialog p {
+    margin-bottom: 20px;
+    color: var(--text-h);
+}
+
+.confirm-dialog-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.confirm-dialog-actions button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    cursor: pointer;
+}
+
+.confirm-dialog-actions .confirm-delete-button {
+    background: var(--error);
+    color: #fff;
+    border: none;
+}

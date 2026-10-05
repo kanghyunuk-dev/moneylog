@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { useAuth } from "../context/useAuth";
 import { useEffect, useState } from "react";
 import { getMyInfo, updateNickname, updatePassword, withdraw } from "../api/user";
+import Modal from "../components/Modal";
 
 function MyPage() {
     // 로그아웃 처리
@@ -126,6 +127,7 @@ function MyPage() {
 
     return (
         <div className="mypage">
+            <title>마이페이지 · MoneyLog</title>
             <h1>마이페이지</h1>
             <p>계정 정보를 관리하세요</p>
 
@@ -140,10 +142,10 @@ function MyPage() {
                 </div>
 
                 <div className="nickname-section">
-                    <label>닉네임 변경</label>
+                    <label htmlFor="nickname">닉네임 변경</label>
                     {isEditingNickname? (
                         <div className="nickname-row">
-                            <input type="text" value={newNickname} onChange={(e) => setNewNickname(e.target.value)}/>
+                            <input id="nickname" type="text" value={newNickname} onChange={(e) => setNewNickname(e.target.value)} autoComplete="nickname"/>
                             <button type="button" onClick={handleNicknameSave}>저장</button>
                             <button type="button" onClick={handleNicknameCancel}>취소</button>
                         </div>        
@@ -153,23 +155,23 @@ function MyPage() {
                             <button type="button" onClick={handleNicknameEditStart}>수정</button>
                         </div>    
                     )}
-                    {nicknameError && <p className="error-message">{nicknameError}</p>}
+                    {nicknameError && <p role="alert" className="error-message">{nicknameError}</p>}
                 </div>
             </div>
             {userInfo.provider !== 'GOOGLE' && (
                 <form className="password-card" onSubmit={handlePasswordSubmit}>
                     <h2>비밀번호 변경</h2>
 
-                    <label>현재 비밀번호</label>
-                    <input type="password" placeholder="현재 비밀번호" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}/>
+                    <label htmlFor="current-password">현재 비밀번호</label>
+                    <input id="current-password" type="password" placeholder="현재 비밀번호" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}/>
+
+                    <label htmlFor="new-password">새 비밀번호</label>
+                    <input id="new-password" type="password" placeholder="영문+숫자 조합 8자 이상" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
+
+                    <label htmlFor="new-password-confirm">새 비밀번호 확인</label>
+                    <input id="new-password-confirm" type="password" placeholder="새 비밀번호 재입력" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)}/>
                     
-                    <label>새 비밀번호</label>
-                    <input type="password" placeholder="영문+숫자 조합 8자 이상" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
-                    
-                    <label>새 비밀번호 확인</label>
-                    <input type="password" placeholder="새 비밀번호 재입력" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)}/>
-                    
-                    {passwordError && <p className="error-message">{passwordError}</p>}
+                    {passwordError && <p role="alert" className="error-message">{passwordError}</p>}
                     {passwordSuccess && <p className="success-message">{passwordSuccess}</p>}
 
                     <button type="submit" disabled={isPasswordLoading}>
@@ -181,12 +183,11 @@ function MyPage() {
             <div className="danger-zone">
                 <h2>계정 관리</h2>
                 <p>되돌릴 수 없는 작업입니다</p>
-                <a href="#" onClick={(e) => { e.preventDefault(); handleWithdrawStart(); }}>회원 탈퇴</a>
+                <button type="button" className="danger-link" onClick={handleWithdrawStart}>회원 탈퇴</button>
             </div>
 
-            {isWithdrawModalOpen && (
-                <div className='modal-overlay'>
-                    <form className='modal-content' onSubmit={handleWithdrawSubmit}>
+            <Modal isOpen={isWithdrawModalOpen} onClose={handleWithdrawCancel} className="modal-content">
+                <form onSubmit={handleWithdrawSubmit}>
                         <h2>정말 탈퇴하시겠습니까?</h2>
                         <p>탈퇴 시 계정 정보가 삭제되며 되돌릴 수 없습니다.</p>
 
@@ -194,22 +195,21 @@ function MyPage() {
                             <p>구글 계정으로 로그인하셨습니다. 비밀번호 확인 없이 탈퇴가 진행됩니다.</p>
                         ) : (
                             <>
-                                <label>비밀번호 확인</label>
-                                <input type="password" placeholder='비밀번호 입력' value={withdrawPassword} onChange={(e) => setWithdrawPassword(e.target.value)}/>
+                                <label htmlFor="withdraw-password">비밀번호 확인</label>
+                                <input id="withdraw-password" type="password" placeholder="비밀번호 입력" value={withdrawPassword} onChange={(e) => setWithdrawPassword(e.target.value)}/>
                             </>
                         )}
 
-                        {withdrawError && <p className='error-message'>{withdrawError}</p>}
+                        {withdrawError && <p role="alert" className="error-message">{withdrawError}</p>}
 
-                        <div className='modal-actions'>
+                        <div className="modal-actions">
                             <button type="button" onClick={handleWithdrawCancel} disabled={isWithdrawLoading}>취소</button>
                             <button type="submit" disabled={isWithdrawLoading}>
                                 {isWithdrawLoading ? '탈퇴 중...' : '탈퇴하기'}
                             </button>
                         </div>
-                    </form>
-                </div>
-            )}
+                </form>
+            </Modal>
         </div>
     );
 }

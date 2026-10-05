@@ -1,8 +1,8 @@
 import { authFetch } from "./authFetch";
 
 // 거래 목록 조회 (월 단위)
-export async function getTransactions(month) {
-    const response = await authFetch(`/api/transactions?month=${month}`);
+export async function getTransactions(month, signal) {
+    const response = await authFetch(`/api/transactions?month=${month}`, { signal });
     
     if(!response.ok) {
         throw new Error('거래 내역을 불러오지 못했습니다');

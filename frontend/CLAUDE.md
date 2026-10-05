@@ -4,8 +4,9 @@
 
 ## 스타일링 — 순수 CSS
 - Tailwind/Bootstrap/Sass 등 프레임워크·전처리기를 의도적으로 배제. 컴포넌트별 `.css` 파일(예: `LoginForm.jsx` + `LoginForm.css`)로 작성.
-- 이유: 지금 학습 목표는 React 자체와 CSS 원리(Flexbox/Grid, cascade, CSS 변수)를 직접 익히는 것. 프레임워크는 이 원리를 감싼 문법일 뿐이라 원리를 먼저 다진 뒤 얹는 게 순서상 맞음(Tailwind가 실무 표준인 건 맞지만, 원리를 아는 사람이 생산성 도구로 선택하는 것이지 원리 대신 배우는 게 아님). Tailwind/Sass는 2차 프로젝트 이후 도입 후보.
+- 이유: 지금 학습 목표는 React 자체와 CSS 원리(Flexbox/Grid, cascade, CSS 변수)를 직접 익히는 것. 프레임워크는 이 원리를 감싼 문법일 뿐이라 원리를 먼저 다진 뒤 얹는 게 순서상 맞음(Tailwind가 실무 표준인 건 맞지만, 원리를 아는 사람이 생산성 도구로 선택하는 것이지 원리 대신 배우는 게 아님).
 - 색상/간격/폰트는 `index.css`의 `:root` CSS 변수로 토큰화하고 `@media (prefers-color-scheme: dark)`로 다크모드 오버라이드(`design-reference`에 라이트/다크 쌍이 있으므로 처음부터 변수 기반으로 짤 것).
+- 모바일 레이아웃 재배치(그리드 1열화, 사이드바 드로어 전환 등)는 `@media (max-width: 700px)` 기준으로 통일(`index.css`의 1024px 미디어쿼리는 글자 크기만 줄이는 별개 용도라 혼용 안 함) — 판단 근거는 `docs/decisions.md` 참고.
 - 디자인 기준은 `docs/design-reference/`의 스크린샷 — 코드 복사가 아니라 레이아웃·간격·색을 보고 새로 작성.
 - CSS Modules 없이 순수 CSS라 클래스명이 파일 간에 전역으로 부딪힐 수 있음 — `.modal-*`/`.error-message`처럼 여러 화면에서 재사용될 이름은 처음부터 각 페이지의 최상위 wrapper 클래스(`.mypage`, `.transactions-page` 등) 아래 후손 선택자로 작성할 것(판단 근거는 `docs/decisions.md` "프론트엔드 구현 판단" 참고).
 - 차트는 Recharts 사용 — 판단 근거는 `docs/decisions.md` 참고.
@@ -19,6 +20,7 @@
 ## 컴포넌트 — 함수형 + Hooks만
 - 클래스 컴포넌트는 쓰지 않음. React 공식 문서도 함수형 기준으로 전환됐고, 신규 프로젝트에서 클래스로 시작하는 경우는 사실상 없음.
 - 레거시 클래스 컴포넌트를 나중에 읽게 되더라도 개념은 Hooks와 1:1 대응됨(`this.state`=`useState`, `componentDidMount`=`useEffect(fn, [])`) — 지금 미리 배울 필요 없이, 필요한 순간 대응 관계로 훑으면 충분.
+- 예외: `ErrorBoundary`는 클래스 컴포넌트(`getDerivedStateFromError`/`componentDidCatch`는 Hooks로 대체 불가능한 React API).
 
 ## API 호출 — `src/api/`로 분리, fetch 직접 사용
 - 컴포넌트 안에서 `fetch`를 직접 호출하지 않고 `src/api/`의 함수를 통해서만 호출.
@@ -29,7 +31,7 @@
 ## 인증 토큰 저장 — httpOnly 쿠키 + CSRF
 - AccessToken/RefreshToken은 서버가 httpOnly 쿠키로 발급(`Set-Cookie`), 프론트는 값을 읽거나 저장하지 않음 — 요청 시 `credentials: 'include'`만 지정하면 브라우저가 자동 전송. `POST`/`PUT`/`DELETE` 요청에는 `XSRF-TOKEN` 쿠키 값을 `X-XSRF-TOKEN` 헤더로 실어야 함(`api/cookie.js`의 `getCookie` 사용).
 - 로그인 여부는 `localStorage` 확인이 아니라 `GET /api/auth/me` 서버 응답으로 판단(`AuthProvider`가 마운트 시 확인) — httpOnly라 프론트가 토큰 존재 자체를 알 수 없기 때문.
-- 처음엔 JWT 흐름 자체를 신규 문제로 격리해서 익히려 localStorage로 시작했고, ①단계 6단계(로그인/회원가입 실동작 검증) 완료 후 httpOnly+CSRF로 전환 완료(2026-08-26) — 상세 트레이드오프와 전환 판단 근거는 `docs/decisions.md`의 "①단계 토큰 저장", "프론트엔드 구현 판단" 참고.
+- 처음엔 JWT 흐름 자체를 신규 문제로 격리해서 익히려 localStorage로 시작했고, ①단계 6단계(로그인/회원가입 실동작 검증) 완료 후 httpOnly+CSRF로 전환 완료 — 상세 트레이드오프와 전환 판단 근거는 `docs/decisions.md`의 "①단계 토큰 저장", "프론트엔드 구현 판단" 참고.
 
 ## 폴더 구조 (①단계부터 적용)
 - `src/pages/` — 라우트 단위 화면(LoginPage, SignupPage, MyPage 등)

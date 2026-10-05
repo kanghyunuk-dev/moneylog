@@ -1,29 +1,35 @@
-import LoginPage from "./pages/LoginPage";
+import { lazy, Suspense } from 'react';
 import {Routes, Route} from "react-router";
-import SignupPage from "./pages/SignupPage";
 import PrivateRoute from "./components/PrivateRoute";
-import HomePage from "./pages/HomePage";
-import MyPage from "./pages/MyPage";
 import Layout from "./components/Layout";
-import TransactionsPage from "./pages/TransactionsPage";
-import BudgetsPage from "./pages/BudgetsPage";
-import DashboardPage from "./pages/DashboardPage";
-import GoalsPage from "./pages/GoalsPage";
+
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const SignupPage = lazy(() => import("./pages/SignupPage"));
+const HomePage = lazy(() => import("./pages/HomePage"));
+const MyPage = lazy(() => import("./pages/MyPage"));
+const TransactionsPage = lazy(() => import("./pages/TransactionsPage"));
+const BudgetsPage = lazy(() => import("./pages/BudgetsPage"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const GoalsPage = lazy(() => import("./pages/GoalsPage"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage/>} />
-      <Route path="/signup" element={<SignupPage/>} />
-      <Route element={<PrivateRoute><Layout/></PrivateRoute>}>
-        <Route path="/" element={<HomePage/>} />
-        <Route path="/mypage" element={<MyPage/>} />
-        <Route path="/transactions" element={<TransactionsPage/>} />
-        <Route path="/budgets" element={<BudgetsPage/>} />
-        <Route path="/dashboard" element={<DashboardPage/>} />
-        <Route path="/goals" element={<GoalsPage/>} />
-      </Route>
-    </Routes>
+    <Suspense fallback={<p role="status">불러오는 중...</p>}>
+      <Routes>
+        <Route path="/login" element={<LoginPage/>} />
+        <Route path="/signup" element={<SignupPage/>} />
+        <Route element={<PrivateRoute><Layout/></PrivateRoute>}>
+          <Route path="/" element={<HomePage/>} />
+          <Route path="/mypage" element={<MyPage/>} />
+          <Route path="/transactions" element={<TransactionsPage/>} />
+          <Route path="/budgets" element={<BudgetsPage/>} />
+          <Route path="/dashboard" element={<DashboardPage/>} />
+          <Route path="/goals" element={<GoalsPage/>} />
+        </Route>
+        <Route path="*" element={<NotFoundPage/>} />
+      </Routes>
+    </Suspense>
   );
 }
 

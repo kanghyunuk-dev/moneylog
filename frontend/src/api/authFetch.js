@@ -15,19 +15,33 @@ function buildRequestOptions(options) {
     };
 }
 
+// 진행 중인 refresh 요청을 저장해두는 변수 (모듈 스코프 - 이 파일이 로드되는 동안 계속 유지됨)
+let refreshPromise = null;
+
 // RefreshToken(쿠키방식) 으로 새 AccessToken 발급 받는 함수
-async function refreshAccessToken() {
+function refreshAccessToken() {
+    // (이미 진행 중인 refresh 있는 경우) 새로 요청 안 보내고 결과 기다림
+    if (refreshPromise) {
+        return refreshPromise;
+    }
+
     // 1. 백엔드의 /api/auth/refresh 호출 (refreshToken 은 쿠키로 자동 전송)
-    const response = await fetch(`${BASE_URL}/api/auth/refresh`, {
+    //    fetch 체인 자체(아직 안 끝난 프로미스)를 refreshPromise에 저장 - 다른 요청이 같이 기다릴 수 있도록
+    refreshPromise = fetch(`${BASE_URL}/api/auth/refresh`, {
         method: 'POST',
         credentials: "include",
         headers: {
             'X-XSRF-TOKEN': getCookie('XSRF-TOKEN'),
         },
-    });
+    })
+        .then((response) => response.ok)
+        .finally(() => {
+            // 끝나면(성공이든 실패든) 초기화 - 다음 번 401 다시 새로 요청
+            refreshPromise = null;
+        });
 
-    // 2. 성공 여부만 반환 (실패 시 예외 던지지 않음 - 호출부가 원래 401 응답으로 처리)
-    return response.ok;
+    // 2. 성공 여부만 반환 (실패 시 예외 던지지 않음 - 호출부가 401 응답으로 처리)
+    return refreshPromise;
 }
 
 // 모든 API 호출이 거쳐가는 공통 함수

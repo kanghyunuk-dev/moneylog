@@ -1,7 +1,9 @@
 .sidebar {
     width: 220px;
     flex-shrink: 0;
-    min-height: 100svh;
+    height: 100svh;
+    position: sticky;
+    top: 0;
     background: #14151a;
     color: #d1d2d8;
     display: flex;
@@ -9,14 +11,36 @@
     padding: 24px 16px;
 }
 
+.sidebar-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+}
+
 .sidebar-logo {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 32px;
     color: #fff;
     font-weight: 700;
     font-size: 18px;
+    text-decoration: none;
+}
+
+/* 모바일 드로어 안에서만 보이는 닫기 버튼 */
+.sidebar-close {
+    display: none;
+    border: none;
+    background: transparent;
+    color: #9ca0ab;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+/* 모바일에서 사이드바 뒤에 깔리는 배경 */
+.sidebar-backdrop {
+    display: none;
 }
 
 .sidebar-nav {
@@ -59,4 +83,36 @@
 .sidebar-logout:hover {
     background: rgba(255, 255, 255, 0.08);
     color: #fff;
+}
+
+/* 모바일: 사이드바를 고정 드로어로 전환 - 기본은 화면 밖에 숨고, .open일 때만 슬라이드 인 */
+@media (max-width: 700px) {
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 200;
+        width: 260px;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .sidebar-close {
+        display: block;
+    }
+
+    .sidebar-backdrop.open {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 150;
+    }
 }

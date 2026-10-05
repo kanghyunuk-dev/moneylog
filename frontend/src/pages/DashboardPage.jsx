@@ -18,33 +18,56 @@ function DashboardPage() {
     const [trend, setTrend] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [trendError, setTrendError] = useState('');
 
     // month 문자열 (yyyy-MM 형태, API 파라미터용)
     const monthParam = `${year}-${String(month).padStart(2, '0')}`;
 
     // 요약 + 카테고리별 지출을 같은 month 파라미터로 함께 조회, year/month 바뀔 때마다 재실행
     useEffect(() => {
+        const controller = new AbortController();
+
         async function fetchDashboardData() {
             setIsLoading(true);
+            setError('');
             try {
-                const [s, b] = await Promise.all([getSummary(monthParam), getCategoryBreakdown(monthParam)]);
+                const [s, b] = await Promise.all([
+                    getSummary(monthParam, controller.signal),
+                    getCategoryBreakdown(monthParam, controller.signal)
+                ]);
                 setSummary(s);
                 setBreakdown(b);
-            } catch (err) {
-                setError(err.message);
-            } finally {
                 setIsLoading(false);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    setError(err.message);
+                    setIsLoading(false);
+                }
             }
         }
 
         fetchDashboardData();
+        return () => controller.abort();
     }, [monthParam]);
 
     // 추이 차트는 개월 수(trendMonths)만 바뀌면 재조회
     useEffect(() => {
-        getMonthlyTrend(monthParam, trendMonths)
-            .then((data) => setTrend(data))
-            .catch((err) => setError(err.message));
+        const controller = new AbortController();
+
+        async function fetchTrend() {
+            setTrendError('');
+            try {
+                const data = await getMonthlyTrend(monthParam, trendMonths, controller.signal);
+                setTrend(data);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    setTrendError(err.message);
+                }
+            }
+        }
+
+        fetchTrend();
+        return () => controller.abort();
     }, [monthParam, trendMonths]);
 
     // 이전/다음 달 이동
@@ -68,6 +91,7 @@ function DashboardPage() {
 
     return (
         <div className="dashboard-page">
+            <title>통계 · MoneyLog</title>
             <div className="dashboard-header">
                 <div>
                     <h1>통계</h1>
@@ -81,11 +105,11 @@ function DashboardPage() {
                 <button type="button" onClick={handleNextMonth}>›</button>
             </div>
 
-            {error && <p className="error-message">{error}</p>}
+            {error && <p role="alert" className="error-message">{error}</p>}
 
-            {isLoading || !summary ? (
-                <p>불러오는중 ...</p>
-            ) : (
+            {isLoading ? (
+                <p role="status">불러오는 중...</p>
+            ) : error ? null : (
                 <>
                     <div className="summary-cards">
                         <div className="summary-card">
@@ -148,16 +172,20 @@ function DashboardPage() {
                                     ))}
                                 </div>
                             </div>
-                            <ResponsiveContainer width="100%" height={260}>
-                                <BarChart data={trend} margin={{ left: 0, right: 10, top: 10, bottom: 0 }}>
-                                    <XAxis dataKey="month" />
-                                    <YAxis tickFormatter={(value) => `${(value / 10000).toLocaleString()}만`} />
-                                    <Tooltip formatter={(value) => `${value.toLocaleString()}원`} />
-                                    <Legend />
-                                    <Bar dataKey="income" name="수입" fill="#10b981" />
-                                    <Bar dataKey="expense" name="지출" fill="#9ca3af" />
-                                </BarChart>
-                            </ResponsiveContainer>
+                            {trendError ? (
+                                <p role="alert" className="error-message">{trendError}</p>
+                            ) : (
+                                <ResponsiveContainer width="100%" height={260}>
+                                    <BarChart data={trend} margin={{ left: 0, right: 10, top: 10, bottom: 0 }}>
+                                        <XAxis dataKey="month" />
+                                        <YAxis tickFormatter={(value) => `${(value / 10000).toLocaleString()}만`} />
+                                        <Tooltip formatter={(value) => `${value.toLocaleString()}원`} />
+                                        <Legend />
+                                        <Bar dataKey="income" name="수입" fill="#10b981" />
+                                        <Bar dataKey="expense" name="지출" fill="#9ca3af" />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            )}
 
                             <div className="change-row">
                                 <div className="change-item">
