@@ -124,6 +124,9 @@ function MyPage() {
         return null;
     }
 
+    // 구글·체험 계정은 비밀번호 없음
+    const hasPassword = userInfo.provider !== 'GOOGLE' && userInfo.provider !== 'DEMO';
+
 
     return (
         <div className="mypage">
@@ -158,7 +161,7 @@ function MyPage() {
                     {nicknameError && <p role="alert" className="error-message">{nicknameError}</p>}
                 </div>
             </div>
-            {userInfo.provider !== 'GOOGLE' && (
+            {hasPassword && (
                 <form className="password-card" onSubmit={handlePasswordSubmit}>
                     <h2>비밀번호 변경</h2>
 
@@ -191,9 +194,13 @@ function MyPage() {
                         <h2>정말 탈퇴하시겠습니까?</h2>
                         <p>탈퇴 시 계정 정보가 삭제되며 되돌릴 수 없습니다.</p>
 
-                        {userInfo.provider === 'GOOGLE' ? (
+                        {userInfo.provider === 'GOOGLE' && (
                             <p>구글 계정으로 로그인하셨습니다. 비밀번호 확인 없이 탈퇴가 진행됩니다.</p>
-                        ) : (
+                        )}
+                        {userInfo.provider === 'DEMO' && (
+                            <p>체험 계정은 비밀번호 확인 없이 탈퇴가 진행됩니다.</p>
+                        )}
+                        {hasPassword && (
                             <>
                                 <label htmlFor="withdraw-password">비밀번호 확인</label>
                                 <input id="withdraw-password" type="password" placeholder="비밀번호 입력" value={withdrawPassword} onChange={(e) => setWithdrawPassword(e.target.value)}/>

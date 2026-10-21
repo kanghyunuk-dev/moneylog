@@ -38,6 +38,7 @@ public class AuthService {
     private final JWTTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
     private final JWTProperties jwtProperties;
+    private final DemoService demoService;
 
     @Transactional
     public UserResponse register(RegisterRequest request) {
@@ -82,15 +83,8 @@ public class AuthService {
         PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
         User user = principalDetails.getUser();
 
-        // 2. AccessToken/RefreshToken 발급
-        String accessToken = jwtTokenProvider.createAccessToken(user.getEmail());
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
-
-        // 3. 기존 RefreshToken 있으면 교체, 없으면 신규 저장
-        updateRefreshToken(user, refreshToken);
-
-        // 4. 토큰 응답 반환
-        return new TokenResponse(accessToken, refreshToken);
+        // 2. 토큰 발급 + RefreshToken 저장
+        return issueTokens(user);
     }
 
     @Transactional
@@ -105,10 +99,21 @@ public class AuthService {
                                 .build()
                 ));
 
+        return issueTokens(user);
+    }
+
+    // 체험 계정 생성 + 로그인 (한 트랜잭션 - 실패 시 전체 롤백)
+    @Transactional
+    public TokenResponse loginAsDemo() {
+        User demoUser = demoService.createDemoUser();
+        return issueTokens(demoUser);
+    }
+
+    // 토큰 발급 + RefreshToken 저장 (있으면 교체)
+    private TokenResponse issueTokens(User user) {
         String accessToken = jwtTokenProvider.createAccessToken(user.getEmail());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
         updateRefreshToken(user, refreshToken);
-
         return new TokenResponse(accessToken, refreshToken);
     }
 
