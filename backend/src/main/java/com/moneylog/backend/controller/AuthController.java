@@ -43,10 +43,15 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<Void> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         TokenResponse tokens = authService.login(request);
+        addTokenCookies(response, tokens);
+        return ResponseEntity.ok().build();
+    }
 
-        response.addHeader(HttpHeaders.SET_COOKIE, cookieUtils.build("accessToken", tokens.accessToken(), Duration.ofMillis(jwtProperties.getAccessTokenExpiration())).toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, cookieUtils.build("refreshToken", tokens.refreshToken(), Duration.ofMillis(jwtProperties.getRefreshTokenExpiration())).toString());
-
+    // 로그인 없이 둘러보기 (체험 계정 로그인)
+    @PostMapping("/demo")
+    public ResponseEntity<Void> demo(HttpServletResponse response) {
+        TokenResponse tokens = authService.loginAsDemo();
+        addTokenCookies(response, tokens);
         return ResponseEntity.ok().build();
     }
 
@@ -88,6 +93,11 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, cookieUtils.build("refreshToken", "", Duration.ZERO).toString());
 
         return ResponseEntity.ok().build();
+    }
+
+    private void addTokenCookies(HttpServletResponse response, TokenResponse tokens) {
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieUtils.build("accessToken", tokens.accessToken(), Duration.ofMillis(jwtProperties.getAccessTokenExpiration())).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieUtils.build("refreshToken", tokens.refreshToken(), Duration.ofMillis(jwtProperties.getRefreshTokenExpiration())).toString());
     }
 
 }

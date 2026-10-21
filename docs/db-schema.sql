@@ -23,9 +23,9 @@
 CREATE TABLE users (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     email       VARCHAR(255) NOT NULL UNIQUE,          -- 로그인 아이디로 사용 (별도 username 없음)
-    password    VARCHAR(255) NULL,                     -- 구글 전용 가입자는 비밀번호를 받지 않으므로 NULL 허용
+    password    VARCHAR(255) NULL,                     -- 구글·체험 계정은 비밀번호 없음 (NULL 허용)
     nickname    VARCHAR(50)  NOT NULL,
-    provider    VARCHAR(20)  NULL,                     -- "LOCAL" / "GOOGLE"
+    provider    VARCHAR(20)  NULL,                     -- "LOCAL" / "GOOGLE" / "DEMO"(체험 계정)
     provider_id VARCHAR(100) NULL,                     -- 구글이 부여한 고유 ID
     created_at  DATETIME     NOT NULL,
     updated_at  DATETIME     NOT NULL,
