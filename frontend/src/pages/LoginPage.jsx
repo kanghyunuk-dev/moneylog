@@ -2,13 +2,14 @@ import './LoginPage.css';
 import { useState } from "react";
 import { useAuth } from "../context/useAuth";
 import { Link, useNavigate, useLocation } from "react-router";
-import { loginRequest } from "../api/auth";
+import { loginRequest, demoLoginRequest } from "../api/auth";
 
 function LoginPage() {
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isDemoLoading, setIsDemoLoading] = useState(false);
     const [error, setError] = useState('');
 
     // 로그인 상태갱신 함수
@@ -42,6 +43,22 @@ function LoginPage() {
         window.location.href = `${import.meta.env.VITE_API_BASE_URL || ''}/oauth2/authorization/google`;
     }
 
+    // 둘러보기 - 체험 계정 로그인 후 홈 이동
+    async function handleDemoLogin() {
+        setError('');
+        setIsDemoLoading(true);
+
+        try {
+            await demoLoginRequest();
+            login();
+            navigate('/');
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsDemoLoading(false);
+        }
+    }
+
     return (
         <div className="auth-layout">
             <div className="login-page">
@@ -64,13 +81,18 @@ function LoginPage() {
                     {/* error 빈문자열이 아니면 error 보임*/}
                     {error && <p role="alert" className="error-message">{error}</p>}
 
-                    <button type="submit" disabled={isLoading}>{isLoading ? '로그인 중...' : '로그인'}</button>
+                    <button type="submit" disabled={isLoading || isDemoLoading}>{isLoading ? '로그인 중...' : '로그인'}</button>
 
                     <div className="divider">또는</div>
 
                     <button type="button" className="google-button" onClick={handleGoogleLogin}>
                         G 구글로 로그인
                     </button>
+
+                    <button type="button" className="demo-button" onClick={handleDemoLogin} disabled={isDemoLoading || isLoading}>
+                        {isDemoLoading ? '체험 계정 준비 중...' : '로그인 없이 둘러보기'}
+                    </button>
+                    <p className="demo-hint">샘플 데이터가 담긴 체험 계정으로 바로 둘러볼 수 있어요 (24시간 후 자동 삭제)</p>
                 </form>
 
                 <p className="signup-link">

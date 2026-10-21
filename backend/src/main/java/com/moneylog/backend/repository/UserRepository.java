@@ -15,4 +15,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmailAndDeletedAtIsNull(String email);
 
     List<User> findByDeletedAtBefore(LocalDateTime threshold);
+
+    List<User> findByProviderAndCreatedAtBefore(String provider, LocalDateTime threshold);
+
+    long countByProviderAndCreatedAtAfter(String provider, LocalDateTime since);
 }
